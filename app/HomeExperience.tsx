@@ -17,20 +17,41 @@ type Month = {
   doorTexture: string;
 };
 
-const months: Month[] = [
-  { id: "ianuarie", name: "Ianuarie", number: "01", accent: "#cd6a4b", door: "#efb7a6", doorTexture: "/texturi/usi/ianuarie.jpg" },
-  { id: "februarie", name: "Februarie", number: "02", accent: "#b84c67", door: "#e6a7b5", doorTexture: "/texturi/usi/februarie.jpg" },
-  { id: "martie", name: "Martie", number: "03", accent: "#6f8e67", door: "#b7c8a8", doorTexture: "/texturi/usi/martie.jpg" },
-  { id: "aprilie", name: "Aprilie", number: "04", accent: "#9b7359", door: "#dcc1a9", doorTexture: "/texturi/usi/aprilie.jpg" },
-  { id: "mai", name: "Mai", number: "05", accent: "#b57a8d", door: "#e8c1cd", doorTexture: "/texturi/usi/mai.jpg" },
-  { id: "iunie", name: "Iunie", number: "06", accent: "#c28b3e", door: "#e7c88e", doorTexture: "/texturi/usi/iunie.jpg" },
-  { id: "iulie", name: "Iulie", number: "07", accent: "#c9643e", door: "#eda07f", doorTexture: "/texturi/usi/iulie.jpg" },
-  { id: "august", name: "August", number: "08", accent: "#a75b3c", door: "#d9906e", doorTexture: "/texturi/usi/august.jpg" },
-  { id: "septembrie", name: "Septembrie", number: "09", accent: "#717f5d", door: "#b8c29e", doorTexture: "/texturi/usi/septembrie.jpg" },
-  { id: "octombrie", name: "Octombrie", number: "10", accent: "#9d5f3d", door: "#d99a72", doorTexture: "/texturi/usi/octombrie.jpg" },
-  { id: "noiembrie", name: "Noiembrie", number: "11", accent: "#746175", door: "#bcaabd", doorTexture: "/texturi/usi/noiembrie.jpg" },
-  { id: "decembrie", name: "Decembrie", number: "12", accent: "#486e65", door: "#91b5ab", doorTexture: "/texturi/usi/decembrie.jpg" },
-];
+const MONTH_NAMES = [
+  "Ianuarie", "Februarie", "Martie", "Aprilie", "Mai", "Iunie",
+  "Iulie", "August", "Septembrie", "Octombrie", "Noiembrie", "Decembrie",
+] as const;
+
+const MONTH_PALETTE = [
+  ["#cd6a4b", "#efb7a6"], ["#b84c67", "#e6a7b5"], ["#6f8e67", "#b7c8a8"],
+  ["#9b7359", "#dcc1a9"], ["#b57a8d", "#e8c1cd"], ["#c28b3e", "#e7c88e"],
+  ["#c9643e", "#eda07f"], ["#a75b3c", "#d9906e"], ["#717f5d", "#b8c29e"],
+  ["#9d5f3d", "#d99a72"], ["#746175", "#bcaabd"], ["#486e65", "#91b5ab"],
+] as const;
+
+function buildCompletedMonths(now: Date): Month[] {
+  const result: Month[] = [];
+  const cursor = new Date(2025, 2, 1);
+  const lastCompletedMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+  while (cursor <= lastCompletedMonth) {
+    const year = cursor.getFullYear();
+    const monthIndex = cursor.getMonth();
+    const monthNumber = String(monthIndex + 1).padStart(2, "0");
+    const [accent, door] = MONTH_PALETTE[monthIndex];
+    result.push({
+      id: `${year}-${monthNumber}`,
+      name: `${MONTH_NAMES[monthIndex]} ${year}`,
+      number: monthNumber,
+      accent,
+      door,
+      doorTexture: `/texturi/usi/${year}-${monthNumber}.jpg`,
+    });
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+
+  return result;
+}
 
 const STORAGE_KEY = "amasiiuli4ever-drawings";
 const CANVAS_BACKGROUND = "#fffaf3";
@@ -385,6 +406,7 @@ function FocusModal({
 export default function HomeExperience() {
   const [drawings, setDrawings] = useState<Record<string, string>>({});
   const [activeMonthId, setActiveMonthId] = useState<string | null>(null);
+  const [months, setMonths] = useState<Month[]>(() => buildCompletedMonths(new Date()));
 
   useEffect(() => {
     try {
@@ -393,6 +415,17 @@ export default function HomeExperience() {
     } catch {
       // A private browser session can block local storage; drawing still works in-session.
     }
+  }, []);
+  useEffect(() => {
+    const syncCompletedMonths = () => {
+      setMonths(buildCompletedMonths(new Date()));
+    };
+    const interval = window.setInterval(syncCompletedMonths, 60 * 60 * 1000);
+    window.addEventListener("focus", syncCompletedMonths);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", syncCompletedMonths);
+    };
   }, []);
 
   useEffect(() => {
@@ -426,40 +459,8 @@ export default function HomeExperience() {
   return (
     <main className="site-shell" id="top">
       <div className="repeating-background">
-        <header className="site-header">
-          <a className="wordmark" href="#calendar" aria-label="amasiiuli4ever.com, mergi la calendar">
-            <span className="wordmark-mark" aria-hidden="true">A<span>+</span>I</span>
-            <span>amasiiuli4ever.com</span>
-          </a>
-          <span className="year-pill">12 luni · 12 amintiri</span>
-        </header>
-
-        <section className="hero" aria-labelledby="hero-title">
-          <p className="eyebrow"><span /> Un an desenat împreună <span /></p>
-          <h1 id="hero-title">
-            Fiecare lună<br />
-            <em>se deschide</em> spre noi.
-          </h1>
-          <p className="hero-copy">
-            Apasă pe o lună, deschide-i ușile și desenează amintirea pe care vrei s-o păstrezi.
-          </p>
-          <a className="hero-link" href="#calendar">
-            Descoperă calendarul <span aria-hidden="true">↓</span>
-          </a>
-        </section>
-
-        <section className="calendar-section" id="calendar" aria-labelledby="calendar-title">
-          <div className="section-heading">
-            <div>
-              <p className="section-index">01 / Calendarul nostru</p>
-              <h2 id="calendar-title">Douăsprezece uși.<br />Un singur an.</h2>
-            </div>
-            <p className="section-instruction">
-              <span className="tap-icon" aria-hidden="true">◎</span>
-              Apasă pe orice lună pentru a o aduce în centrul ecranului.
-            </p>
-          </div>
-
+        <section className="calendar-section" id="calendar" aria-label="Calendarul ușilor">
+          <h1 className="sr-only">Calendarul ușilor, din martie 2025 până în prezent</h1>
           <div className="months-grid">
             {months.map((month) => (
               <MonthCard
@@ -472,23 +473,6 @@ export default function HomeExperience() {
           </div>
         </section>
 
-        <section className="placeholder-guide" aria-label="Ghid pentru înlocuirea fundalului">
-          <span className="guide-number">90%</span>
-          <div>
-            <p className="guide-label">Slot de fundal</p>
-            <p>
-              Textura repetată este un placeholder. Poate fi înlocuită ulterior cu imaginea voastră,
-              fără să schimbe grila sau interacțiunile.
-            </p>
-          </div>
-        </section>
-
-        <footer>
-          <p>Făcut pentru toate lunile noastre.</p>
-          <a href="#top">
-            Înapoi sus <span aria-hidden="true">↑</span>
-          </a>
-        </footer>
       </div>
 
       {activeMonth ? (
