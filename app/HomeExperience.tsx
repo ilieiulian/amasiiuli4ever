@@ -1,0 +1,501 @@
+"use client";
+
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
+
+type Month = {
+  id: string;
+  name: string;
+  number: string;
+  accent: string;
+  door: string;
+};
+
+const months: Month[] = [
+  { id: "ianuarie", name: "Ianuarie", number: "01", accent: "#cd6a4b", door: "#efb7a6" },
+  { id: "februarie", name: "Februarie", number: "02", accent: "#b84c67", door: "#e6a7b5" },
+  { id: "martie", name: "Martie", number: "03", accent: "#6f8e67", door: "#b7c8a8" },
+  { id: "aprilie", name: "Aprilie", number: "04", accent: "#9b7359", door: "#dcc1a9" },
+  { id: "mai", name: "Mai", number: "05", accent: "#b57a8d", door: "#e8c1cd" },
+  { id: "iunie", name: "Iunie", number: "06", accent: "#c28b3e", door: "#e7c88e" },
+  { id: "iulie", name: "Iulie", number: "07", accent: "#c9643e", door: "#eda07f" },
+  { id: "august", name: "August", number: "08", accent: "#a75b3c", door: "#d9906e" },
+  { id: "septembrie", name: "Septembrie", number: "09", accent: "#717f5d", door: "#b8c29e" },
+  { id: "octombrie", name: "Octombrie", number: "10", accent: "#9d5f3d", door: "#d99a72" },
+  { id: "noiembrie", name: "Noiembrie", number: "11", accent: "#746175", door: "#bcaabd" },
+  { id: "decembrie", name: "Decembrie", number: "12", accent: "#486e65", door: "#91b5ab" },
+];
+
+const STORAGE_KEY = "amasiiuli4ever-drawings";
+const CANVAS_BACKGROUND = "#fffaf3";
+
+function PlaceholderArtwork({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className={`art-placeholder${compact ? " art-placeholder--compact" : ""}`}>
+      <span className="placeholder-corners" aria-hidden="true" />
+      <span className="placeholder-mark" aria-hidden="true">+</span>
+      <span className="placeholder-title">Desenul vostru</span>
+      <span className="placeholder-note">placeholder</span>
+    </div>
+  );
+}
+
+function DoorPanels({ number }: { number: string }) {
+  return (
+    <span className="door-layer" aria-hidden="true">
+      <span className="door-half door-half--left">
+        <span className="door-line" />
+        <span className="door-number">{number.slice(0, 1)}</span>
+        <span className="door-handle" />
+      </span>
+      <span className="door-half door-half--right">
+        <span className="door-line" />
+        <span className="door-number">{number.slice(1)}</span>
+        <span className="door-handle" />
+      </span>
+    </span>
+  );
+}
+
+function MonthCard({
+  month,
+  drawing,
+  onOpen,
+}: {
+  month: Month;
+  drawing?: string;
+  onOpen: () => void;
+}) {
+  const cardStyle = {
+    "--month-accent": month.accent,
+    "--door-color": month.door,
+  } as CSSProperties;
+
+  return (
+    <button
+      className="month-card"
+      style={cardStyle}
+      type="button"
+      onClick={onOpen}
+      aria-label={`Deschide luna ${month.name} în atelierul de desen`}
+      aria-haspopup="dialog"
+    >
+      <span className="month-square">
+        {drawing ? (
+          <span
+            className="saved-art"
+            style={{ backgroundImage: `url(${drawing})` }}
+            role="img"
+            aria-label={`Desen salvat pentru ${month.name}`}
+          />
+        ) : (
+          <PlaceholderArtwork compact />
+        )}
+        <DoorPanels number={month.number} />
+        <span className="open-hint">Apasă</span>
+      </span>
+      <span className="month-meta">
+        <span className="month-name">{month.name}</span>
+        <span className="month-state">{drawing ? "desen salvat" : "de desenat"}</span>
+      </span>
+    </button>
+  );
+}
+
+function DrawingStudio({
+  month,
+  initialDrawing,
+  onSave,
+}: {
+  month: Month;
+  initialDrawing?: string;
+  onSave: (data: string) => void;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isDrawingRef = useRef(false);
+  const historyRef = useRef<string[]>([]);
+  const [color, setColor] = useState("#8f3d4f");
+  const [brushSize, setBrushSize] = useState(12);
+  const [isEraser, setIsEraser] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const paintCanvasBackground = (context: CanvasRenderingContext2D) => {
+    context.save();
+    context.globalCompositeOperation = "source-over";
+    context.fillStyle = CANVAS_BACKGROUND;
+    context.fillRect(0, 0, context.canvas.width, context.canvas.height);
+    context.restore();
+  };
+
+  const restoreSnapshot = (snapshot?: string) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    paintCanvasBackground(context);
+    if (!snapshot) return;
+
+    const image = new Image();
+    image.onload = () => {
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    };
+    image.src = snapshot;
+  };
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.width = 600;
+    canvas.height = 600;
+    restoreSnapshot(initialDrawing);
+    // The studio remounts for every selected month.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const getCanvasPoint = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0, scale: 1 };
+    const bounds = canvas.getBoundingClientRect();
+    return {
+      x: (event.clientX - bounds.left) * (canvas.width / bounds.width),
+      y: (event.clientY - bounds.top) * (canvas.height / bounds.height),
+      scale: canvas.width / bounds.width,
+    };
+  };
+
+  const startDrawing = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+
+    historyRef.current.push(canvas.toDataURL("image/webp", 0.86));
+    if (historyRef.current.length > 24) historyRef.current.shift();
+
+    const point = getCanvasPoint(event);
+    isDrawingRef.current = true;
+    canvas.setPointerCapture(event.pointerId);
+    context.beginPath();
+    context.moveTo(point.x, point.y);
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.strokeStyle = isEraser ? CANVAS_BACKGROUND : color;
+    context.lineWidth = brushSize * point.scale;
+  };
+
+  const draw = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    if (!isDrawingRef.current) return;
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+    const point = getCanvasPoint(event);
+    context.lineTo(point.x, point.y);
+    context.stroke();
+  };
+
+  const stopDrawing = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context || !isDrawingRef.current) return;
+    context.closePath();
+    isDrawingRef.current = false;
+    if (canvas.hasPointerCapture(event.pointerId)) {
+      canvas.releasePointerCapture(event.pointerId);
+    }
+    setSaved(false);
+  };
+
+  const undo = () => {
+    const snapshot = historyRef.current.pop();
+    if (snapshot) restoreSnapshot(snapshot);
+    setSaved(false);
+  };
+
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+    historyRef.current.push(canvas.toDataURL("image/webp", 0.86));
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    paintCanvasBackground(context);
+    setSaved(false);
+  };
+
+  const saveCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    onSave(canvas.toDataURL("image/webp", 0.9));
+    setSaved(true);
+  };
+
+  return (
+    <section className="studio" aria-label={`Atelier de desen pentru ${month.name}`}>
+      <div className="studio-heading">
+        <div>
+          <p className="studio-kicker">Atelierul vostru</p>
+          <h2>Desenează luna {month.name}</h2>
+        </div>
+        <p className="studio-tip">Folosește degetul, mouse-ul sau stylus-ul.</p>
+      </div>
+
+      <div className="canvas-frame">
+        <canvas
+          ref={canvasRef}
+          className="drawing-canvas"
+          aria-label={`Pânză de desen pentru luna ${month.name}`}
+          onPointerDown={startDrawing}
+          onPointerMove={draw}
+          onPointerUp={stopDrawing}
+          onPointerCancel={stopDrawing}
+          onPointerLeave={(event) => {
+            if (event.buttons === 0) stopDrawing(event);
+          }}
+        />
+      </div>
+
+      <div className="studio-controls">
+        <label className="control control--color">
+          <span>Culoare</span>
+          <input
+            type="color"
+            value={color}
+            onChange={(event) => {
+              setColor(event.target.value);
+              setIsEraser(false);
+            }}
+            aria-label="Alege culoarea pensulei"
+          />
+        </label>
+
+        <label className="control control--range">
+          <span>Grosime</span>
+          <input
+            type="range"
+            min="3"
+            max="36"
+            value={brushSize}
+            onChange={(event) => setBrushSize(Number(event.target.value))}
+            aria-label="Grosimea pensulei"
+          />
+        </label>
+
+        <button
+          className={`tool-button${isEraser ? " is-active" : ""}`}
+          type="button"
+          onClick={() => setIsEraser((value) => !value)}
+          aria-pressed={isEraser}
+        >
+          <span aria-hidden="true">◇</span> Gumă
+        </button>
+        <button className="tool-button" type="button" onClick={undo}>
+          <span aria-hidden="true">↶</span> Undo
+        </button>
+        <button className="tool-button" type="button" onClick={clearCanvas}>
+          <span aria-hidden="true">×</span> Șterge
+        </button>
+      </div>
+
+      <button className="save-button" type="button" onClick={saveCanvas}>
+        <span>{saved ? "Salvat în calendar" : `Salvează în ${month.name}`}</span>
+        <span aria-hidden="true">{saved ? "✓" : "→"}</span>
+      </button>
+      <p className="save-note" aria-live="polite">
+        {saved
+          ? "Desenul apare acum în pătratul lunii."
+          : "Desenul se păstrează pe acest dispozitiv."}
+      </p>
+    </section>
+  );
+}
+
+function FocusModal({
+  month,
+  drawing,
+  onSave,
+  onClose,
+}: {
+  month: Month;
+  drawing?: string;
+  onSave: (data: string) => void;
+  onClose: () => void;
+}) {
+  const modalStyle = {
+    "--month-accent": month.accent,
+    "--door-color": month.door,
+  } as CSSProperties;
+
+  return (
+    <div
+      className="focus-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="focus-title"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div className="focus-shell" style={modalStyle}>
+        <button className="close-button" type="button" onClick={onClose} aria-label="Închide atelierul">
+          <span aria-hidden="true">×</span>
+        </button>
+
+        <div className="focus-intro">
+          <div className="focus-month">
+            <span className="focus-number">{month.number}</span>
+            <div>
+              <p>Capitolul nostru</p>
+              <h2 id="focus-title">{month.name}</h2>
+            </div>
+          </div>
+
+          <div className="focus-card" aria-hidden="true">
+            {drawing ? (
+              <span className="saved-art" style={{ backgroundImage: `url(${drawing})` }} />
+            ) : (
+              <PlaceholderArtwork />
+            )}
+            <DoorPanels number={month.number} />
+          </div>
+
+          <p className="focus-caption">
+            Ușile s-au deschis. Lasă înăuntru desenul care păstrează luna aceasta.
+          </p>
+        </div>
+
+        <DrawingStudio
+          key={month.id}
+          month={month}
+          initialDrawing={drawing}
+          onSave={onSave}
+        />
+      </div>
+    </div>
+  );
+}
+
+export default function HomeExperience() {
+  const [drawings, setDrawings] = useState<Record<string, string>>({});
+  const [activeMonthId, setActiveMonthId] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(STORAGE_KEY);
+      if (saved) setDrawings(JSON.parse(saved) as Record<string, string>);
+    } catch {
+      // A private browser session can block local storage; drawing still works in-session.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!activeMonthId) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setActiveMonthId(null);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeMonthId]);
+
+  const activeMonth = months.find((month) => month.id === activeMonthId);
+
+  const saveDrawing = (monthId: string, data: string) => {
+    setDrawings((current) => {
+      const next = { ...current, [monthId]: data };
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // Keep the current session usable even if the device storage is full.
+      }
+      return next;
+    });
+  };
+
+  return (
+    <main className="site-shell" id="top">
+      <div className="repeating-background">
+        <header className="site-header">
+          <a className="wordmark" href="#calendar" aria-label="amasiiuli4ever.com, mergi la calendar">
+            <span className="wordmark-mark" aria-hidden="true">A<span>+</span>I</span>
+            <span>amasiiuli4ever.com</span>
+          </a>
+          <span className="year-pill">12 luni · 12 amintiri</span>
+        </header>
+
+        <section className="hero" aria-labelledby="hero-title">
+          <p className="eyebrow"><span /> Un an desenat împreună <span /></p>
+          <h1 id="hero-title">
+            Fiecare lună<br />
+            <em>se deschide</em> spre noi.
+          </h1>
+          <p className="hero-copy">
+            Apasă pe o lună, deschide-i ușile și desenează amintirea pe care vrei s-o păstrezi.
+          </p>
+          <a className="hero-link" href="#calendar">
+            Descoperă calendarul <span aria-hidden="true">↓</span>
+          </a>
+        </section>
+
+        <section className="calendar-section" id="calendar" aria-labelledby="calendar-title">
+          <div className="section-heading">
+            <div>
+              <p className="section-index">01 / Calendarul nostru</p>
+              <h2 id="calendar-title">Douăsprezece uși.<br />Un singur an.</h2>
+            </div>
+            <p className="section-instruction">
+              <span className="tap-icon" aria-hidden="true">◎</span>
+              Apasă pe orice lună pentru a o aduce în centrul ecranului.
+            </p>
+          </div>
+
+          <div className="months-grid">
+            {months.map((month) => (
+              <MonthCard
+                key={month.id}
+                month={month}
+                drawing={drawings[month.id]}
+                onOpen={() => setActiveMonthId(month.id)}
+              />
+            ))}
+          </div>
+        </section>
+
+        <section className="placeholder-guide" aria-label="Ghid pentru înlocuirea fundalului">
+          <span className="guide-number">90%</span>
+          <div>
+            <p className="guide-label">Slot de fundal</p>
+            <p>
+              Textura repetată este un placeholder. Poate fi înlocuită ulterior cu imaginea voastră,
+              fără să schimbe grila sau interacțiunile.
+            </p>
+          </div>
+        </section>
+
+        <footer>
+          <p>Făcut pentru toate lunile noastre.</p>
+          <a href="#top">
+            Înapoi sus <span aria-hidden="true">↑</span>
+          </a>
+        </footer>
+      </div>
+
+      {activeMonth ? (
+        <FocusModal
+          month={activeMonth}
+          drawing={drawings[activeMonth.id]}
+          onSave={(data) => saveDrawing(activeMonth.id, data)}
+          onClose={() => setActiveMonthId(null)}
+        />
+      ) : null}
+    </main>
+  );
+}
