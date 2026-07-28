@@ -14,21 +14,22 @@ type Month = {
   number: string;
   accent: string;
   door: string;
+  doorTexture: string;
 };
 
 const months: Month[] = [
-  { id: "ianuarie", name: "Ianuarie", number: "01", accent: "#cd6a4b", door: "#efb7a6" },
-  { id: "februarie", name: "Februarie", number: "02", accent: "#b84c67", door: "#e6a7b5" },
-  { id: "martie", name: "Martie", number: "03", accent: "#6f8e67", door: "#b7c8a8" },
-  { id: "aprilie", name: "Aprilie", number: "04", accent: "#9b7359", door: "#dcc1a9" },
-  { id: "mai", name: "Mai", number: "05", accent: "#b57a8d", door: "#e8c1cd" },
-  { id: "iunie", name: "Iunie", number: "06", accent: "#c28b3e", door: "#e7c88e" },
-  { id: "iulie", name: "Iulie", number: "07", accent: "#c9643e", door: "#eda07f" },
-  { id: "august", name: "August", number: "08", accent: "#a75b3c", door: "#d9906e" },
-  { id: "septembrie", name: "Septembrie", number: "09", accent: "#717f5d", door: "#b8c29e" },
-  { id: "octombrie", name: "Octombrie", number: "10", accent: "#9d5f3d", door: "#d99a72" },
-  { id: "noiembrie", name: "Noiembrie", number: "11", accent: "#746175", door: "#bcaabd" },
-  { id: "decembrie", name: "Decembrie", number: "12", accent: "#486e65", door: "#91b5ab" },
+  { id: "ianuarie", name: "Ianuarie", number: "01", accent: "#cd6a4b", door: "#efb7a6", doorTexture: "/texturi/usi/ianuarie.jpg" },
+  { id: "februarie", name: "Februarie", number: "02", accent: "#b84c67", door: "#e6a7b5", doorTexture: "/texturi/usi/februarie.jpg" },
+  { id: "martie", name: "Martie", number: "03", accent: "#6f8e67", door: "#b7c8a8", doorTexture: "/texturi/usi/martie.jpg" },
+  { id: "aprilie", name: "Aprilie", number: "04", accent: "#9b7359", door: "#dcc1a9", doorTexture: "/texturi/usi/aprilie.jpg" },
+  { id: "mai", name: "Mai", number: "05", accent: "#b57a8d", door: "#e8c1cd", doorTexture: "/texturi/usi/mai.jpg" },
+  { id: "iunie", name: "Iunie", number: "06", accent: "#c28b3e", door: "#e7c88e", doorTexture: "/texturi/usi/iunie.jpg" },
+  { id: "iulie", name: "Iulie", number: "07", accent: "#c9643e", door: "#eda07f", doorTexture: "/texturi/usi/iulie.jpg" },
+  { id: "august", name: "August", number: "08", accent: "#a75b3c", door: "#d9906e", doorTexture: "/texturi/usi/august.jpg" },
+  { id: "septembrie", name: "Septembrie", number: "09", accent: "#717f5d", door: "#b8c29e", doorTexture: "/texturi/usi/septembrie.jpg" },
+  { id: "octombrie", name: "Octombrie", number: "10", accent: "#9d5f3d", door: "#d99a72", doorTexture: "/texturi/usi/octombrie.jpg" },
+  { id: "noiembrie", name: "Noiembrie", number: "11", accent: "#746175", door: "#bcaabd", doorTexture: "/texturi/usi/noiembrie.jpg" },
+  { id: "decembrie", name: "Decembrie", number: "12", accent: "#486e65", door: "#91b5ab", doorTexture: "/texturi/usi/decembrie.jpg" },
 ];
 
 const STORAGE_KEY = "amasiiuli4ever-drawings";
@@ -74,6 +75,7 @@ function MonthCard({
   const cardStyle = {
     "--month-accent": month.accent,
     "--door-color": month.door,
+    "--door-texture": `url("${month.doorTexture}")`,
   } as CSSProperties;
 
   return (
@@ -328,6 +330,7 @@ function FocusModal({
   const modalStyle = {
     "--month-accent": month.accent,
     "--door-color": month.door,
+    "--door-texture": `url("${month.doorTexture}")`,
   } as CSSProperties;
 
   return (
