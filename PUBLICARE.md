@@ -31,11 +31,24 @@ Nu introduce tokenul Cloudflare in fisierele proiectului.
 ## Publicarea actualizarilor
 
 1. Modifica texturile sau codul.
-2. Porneste `publica-site.cmd` din folderul proiectului.
+2. Da dublu-click pe `publica-site.cmd` din folderul proiectului. Nu folosi
+   optiunea **Run with PowerShell** pentru fisierul `.cmd`.
 3. Urmareste progresul in fila **Actions** din GitHub.
 
 Fisierul `publica-site.cmd` adauga modificarile, creeaza un commit si il trimite
 pe GitHub. Workflow-ul publica automat versiunea noua daca build-ul reuseste.
+
+Dintr-un terminal PowerShell poti folosi:
+
+```powershell
+.\publica-site.cmd
+```
+
+Alternativ, poti porni direct scriptul PowerShell:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\publica-site.ps1
+```
 
 ## Unde se incarca texturile
 
