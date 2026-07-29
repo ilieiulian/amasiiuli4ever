@@ -1,0 +1,46 @@
+name: Publicare automata
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: productie
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Build si publicare
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: productie
+
+    steps:
+      - name: Descarca proiectul
+        uses: actions/checkout@v6
+
+      - name: Configureaza Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+
+      - name: Instaleaza dependentele
+        run: npm ci
+
+      - name: Verifica si construieste site-ul
+        run: npm run build
+
+      - name: Publica pe Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: 4.92.0
+          command: deploy --config dist/server/wrangler.json

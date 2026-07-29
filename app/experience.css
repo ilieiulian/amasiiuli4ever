@@ -31,8 +31,8 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 }
 
 .repeating-background {
-  --background-top: url("/texturi/fundal/top.jpg");
-  --background-middle: url("/texturi/fundal/middle.jpg");
+  --background-top: url("/texturi/fundal/background_top.png");
+  --background-middle: url("/texturi/fundal/background_middle.png");
   --background-bottom: url("/texturi/fundal/bottom.jpg");
   position: relative;
   isolation: isolate;
