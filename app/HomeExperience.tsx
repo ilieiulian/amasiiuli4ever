@@ -15,6 +15,12 @@ type Month = {
   doorTextureMonthlyPng: string;
 };
 
+type PublicDrawing = {
+  imageUrl: string;
+  message: string;
+  updatedAt: string;
+};
+
 const MONTH_NAMES = [
   "Ianuarie", "Februarie", "Martie", "Aprilie", "Mai", "Iunie",
   "Iulie", "August", "Septembrie", "Octombrie", "Noiembrie", "Decembrie",
@@ -51,8 +57,6 @@ function buildCompletedMonths(now: Date): Month[] {
 
   return result;
 }
-
-const STORAGE_KEY = "amasiiuli4ever-drawings";
 
 function InsideArtwork({
   drawing,
@@ -124,11 +128,17 @@ function MonthCard({
 function DrawingStudio({
   month,
   initialDrawing,
+  initialMessage,
+  publicationCode,
+  onPublicationCodeChange,
   onSave,
 }: {
   month: Month;
   initialDrawing?: string;
-  onSave: (data: string) => void;
+  initialMessage?: string;
+  publicationCode: string;
+  onPublicationCodeChange: (value: string) => void;
+  onSave: (image: Blob, message: string, code: string) => Promise<void>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawingRef = useRef(false);
@@ -136,7 +146,10 @@ function DrawingStudio({
   const [color, setColor] = useState("#8f3d4f");
   const [brushSize, setBrushSize] = useState(12);
   const [isEraser, setIsEraser] = useState(false);
+  const [message, setMessage] = useState(initialMessage ?? "");
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveFeedback, setSaveFeedback] = useState("");
 
   const restoreSnapshot = (snapshot?: string) => {
     const canvas = canvasRef.current;
@@ -233,11 +246,38 @@ function DrawingStudio({
     setSaved(false);
   };
 
-  const saveCanvas = () => {
+  const saveCanvas = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    onSave(canvas.toDataURL("image/webp", 0.9));
-    setSaved(true);
+    if (!publicationCode.trim()) {
+      setSaveFeedback("Introdu codul de publicare.");
+      return;
+    }
+
+    setSaving(true);
+    setSaveFeedback("");
+    try {
+      const image = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error("Imaginea nu a putut fi pregătită."));
+          },
+          "image/webp",
+          0.9,
+        );
+      });
+      await onSave(image, message.trim(), publicationCode);
+      setSaved(true);
+      setSaveFeedback("Desenul și mesajul sunt acum publice.");
+    } catch (error) {
+      setSaved(false);
+      setSaveFeedback(
+        error instanceof Error ? error.message : "Desenul nu a putut fi salvat.",
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -307,28 +347,69 @@ function DrawingStudio({
         </button>
       </div>
 
-      <button className="save-button" type="button" onClick={saveCanvas}>
-        <span>{saved ? "Salvat în calendar" : `Salvează în ${month.name}`}</span>
+      <div className="publication-fields">
+        <label className="publication-field">
+          <span>Mesaj atașat (opțional)</span>
+          <textarea
+            value={message}
+            maxLength={300}
+            rows={3}
+            placeholder="Scrie câteva cuvinte despre luna aceasta…"
+            onChange={(event) => {
+              setMessage(event.target.value);
+              setSaved(false);
+            }}
+          />
+          <small>{message.length}/300</small>
+        </label>
+
+        <label className="publication-field">
+          <span>Cod de publicare</span>
+          <input
+            type="password"
+            value={publicationCode}
+            autoComplete="off"
+            placeholder="Codul știut doar de voi doi"
+            onChange={(event) => onPublicationCodeChange(event.target.value)}
+          />
+        </label>
+      </div>
+
+      <button
+        className="save-button"
+        type="button"
+        onClick={saveCanvas}
+        disabled={saving}
+      >
+        <span>
+          {saving
+            ? "Se publică…"
+            : saved
+              ? "Salvat în calendar"
+              : `Publică în ${month.name}`}
+        </span>
         <span aria-hidden="true">{saved ? "✓" : "→"}</span>
       </button>
       <p className="save-note" aria-live="polite">
-        {saved
-          ? "Desenul apare acum în pătratul lunii."
-          : "Desenul se păstrează pe acest dispozitiv."}
+        {saveFeedback ||
+          "Imaginea publicată va fi vizibilă tuturor, pe orice dispozitiv."}
       </p>
     </section>
   );
 }
-
 function FocusModal({
   month,
   drawing,
+  publicationCode,
+  onPublicationCodeChange,
   onSave,
   onClose,
 }: {
   month: Month;
-  drawing?: string;
-  onSave: (data: string) => void;
+  drawing?: PublicDrawing;
+  publicationCode: string;
+  onPublicationCodeChange: (value: string) => void;
+  onSave: (image: Blob, message: string, code: string) => Promise<void>;
   onClose: () => void;
 }) {
   const modalStyle = {
@@ -353,7 +434,6 @@ function FocusModal({
 
         <div className="focus-intro">
           <div className="focus-month">
-
             <div>
               <p>Capitolul nostru</p>
               <h2 id="focus-title">{month.name}</h2>
@@ -361,9 +441,16 @@ function FocusModal({
           </div>
 
           <div className="focus-card" aria-hidden="true">
-            <InsideArtwork drawing={drawing} label={`Interiorul lunii ${month.name}`} />
+            <InsideArtwork
+              drawing={drawing?.imageUrl}
+              label={`Interiorul lunii ${month.name}`}
+            />
             <DoorPanels />
           </div>
+
+          {drawing?.message ? (
+            <p className="drawing-message">{drawing.message}</p>
+          ) : null}
 
           <p className="focus-caption">
             Ușile s-au deschis. Lasă înăuntru desenul care păstrează luna aceasta.
@@ -373,27 +460,48 @@ function FocusModal({
         <DrawingStudio
           key={month.id}
           month={month}
-          initialDrawing={drawing}
+          initialDrawing={drawing?.imageUrl}
+          initialMessage={drawing?.message}
+          publicationCode={publicationCode}
+          onPublicationCodeChange={onPublicationCodeChange}
           onSave={onSave}
         />
       </div>
     </div>
   );
 }
-
 export default function HomeExperience() {
-  const [drawings, setDrawings] = useState<Record<string, string>>({});
+  const [drawings, setDrawings] = useState<Record<string, PublicDrawing>>({});
   const [activeMonthId, setActiveMonthId] = useState<string | null>(null);
+  const [publicationCode, setPublicationCode] = useState("");
   const [months, setMonths] = useState<Month[]>(() => buildCompletedMonths(new Date()));
 
   useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (saved) setDrawings(JSON.parse(saved) as Record<string, string>);
-    } catch {
-      // A private browser session can block local storage; drawing still works in-session.
-    }
+    let mounted = true;
+    const loadDrawings = async () => {
+      try {
+        const response = await fetch("/api/drawings", { cache: "no-store" });
+        if (!response.ok) return;
+        const payload = (await response.json()) as {
+          drawings?: Record<string, PublicDrawing>;
+        };
+        if (mounted && payload.drawings) setDrawings(payload.drawings);
+      } catch {
+        // The canvas remains available if the network is temporarily unavailable.
+      }
+    };
+    const handleFocus = () => void loadDrawings();
+
+    void loadDrawings();
+    const interval = window.setInterval(() => void loadDrawings(), 5 * 60 * 1000);
+    window.addEventListener("focus", handleFocus);
+    return () => {
+      mounted = false;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+    };
   }, []);
+
   useEffect(() => {
     const syncCompletedMonths = () => {
       setMonths(buildCompletedMonths(new Date()));
@@ -426,16 +534,33 @@ export default function HomeExperience() {
     (_, rowIndex) => months.slice(rowIndex * 3, rowIndex * 3 + 3),
   );
 
-  const saveDrawing = (monthId: string, data: string) => {
-    setDrawings((current) => {
-      const next = { ...current, [monthId]: data };
-      try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        // Keep the current session usable even if the device storage is full.
-      }
-      return next;
+  const saveDrawing = async (
+    monthId: string,
+    image: Blob,
+    message: string,
+    code: string,
+  ) => {
+    const form = new FormData();
+    form.append("image", image, `${monthId}.webp`);
+    form.append("message", message);
+    form.append("code", code);
+
+    const response = await fetch(`/api/drawings/${monthId}`, {
+      method: "POST",
+      body: form,
     });
+    const payload = (await response.json()) as {
+      drawing?: PublicDrawing;
+      error?: string;
+    };
+    if (!response.ok || !payload.drawing) {
+      throw new Error(payload.error ?? "Desenul nu a putut fi publicat.");
+    }
+
+    setDrawings((current) => ({
+      ...current,
+      [monthId]: payload.drawing as PublicDrawing,
+    }));
   };
 
   return (
@@ -455,7 +580,7 @@ export default function HomeExperience() {
                     <MonthCard
                       key={month.id}
                       month={month}
-                      drawing={drawings[month.id]}
+                      drawing={drawings[month.id]?.imageUrl}
                       onOpen={() => setActiveMonthId(month.id)}
                     />
                   ))}
@@ -464,14 +589,17 @@ export default function HomeExperience() {
             ))}
           </div>
         </section>
-
       </div>
 
       {activeMonth ? (
         <FocusModal
           month={activeMonth}
           drawing={drawings[activeMonth.id]}
-          onSave={(data) => saveDrawing(activeMonth.id, data)}
+          publicationCode={publicationCode}
+          onPublicationCodeChange={setPublicationCode}
+          onSave={(image, message, code) =>
+            saveDrawing(activeMonth.id, image, message, code)
+          }
           onClose={() => setActiveMonthId(null)}
         />
       ) : null}

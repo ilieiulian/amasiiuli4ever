@@ -37,6 +37,17 @@ jobs:
       - name: Verifica si construieste site-ul
         run: npm run build
 
+      - name: Pregateste stocarea imaginilor
+        run: |
+          npx wrangler r2 bucket list > r2-buckets.txt
+          if ! grep -q "amasiiuli4ever-drawings" r2-buckets.txt; then
+            npx wrangler r2 bucket create amasiiuli4ever-drawings
+          fi
+          node scripts/configure-cloudflare-r2.mjs
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Publica pe Cloudflare Workers
         run: npx wrangler deploy --config dist/server/wrangler.json
         env:

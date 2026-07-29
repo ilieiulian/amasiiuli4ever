@@ -43,6 +43,7 @@
   .studio { padding: 38px 14px 32px; }
   .canvas-frame { padding: 5px; }
   .studio-controls { grid-template-columns: repeat(3, 1fr); }
+  .publication-fields { grid-template-columns: 1fr; }
   .control { min-width: 0; }
   .control--color { grid-column: span 1; }
   .control--range { grid-column: span 2; }
