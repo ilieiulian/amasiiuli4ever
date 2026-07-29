@@ -21,5 +21,9 @@ an. De exemplu, toate usile pentru luna martie folosesc `martie.png`.
 Daca imaginea unei luni lipseste, site-ul incearca automat o textura specifica
 anului: mai intai `AAAA-LL.png`, apoi `AAAA-LL.jpg`.
 
-Foloseste imagini patrate, de preferat minimum 1200 x 1200 px. Site-ul imparte
-automat fiecare imagine intre jumatatea stanga si jumatatea dreapta a usii.
+Imaginile lunilor reprezinta doar fata usii si pot avea fundal transparent.
+Site-ul pastreaza proportiile lor si le imparte intre cele doua jumatati.
+
+Fisierul `background.png` este fundalul comun din interiorul tuturor usilor.
+Desenele create in atelier sunt pastrate separat pentru fiecare luna si sunt
+afisate transparent deasupra acestui fundal; ele nu modifica textura usii.

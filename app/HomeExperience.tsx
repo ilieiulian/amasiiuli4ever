@@ -61,16 +61,25 @@ function buildCompletedMonths(now: Date): Month[] {
 }
 
 const STORAGE_KEY = "amasiiuli4ever-drawings";
-const CANVAS_BACKGROUND = "#fffaf3";
 
-function PlaceholderArtwork({ compact = false }: { compact?: boolean }) {
+function InsideArtwork({
+  drawing,
+  label,
+}: {
+  drawing?: string;
+  label: string;
+}) {
   return (
-    <div className={`art-placeholder${compact ? " art-placeholder--compact" : ""}`}>
-      <span className="placeholder-corners" aria-hidden="true" />
-      <span className="placeholder-mark" aria-hidden="true">+</span>
-      <span className="placeholder-title">Desenul vostru</span>
-      <span className="placeholder-note">placeholder</span>
-    </div>
+    <span className="inside-artwork" role="img" aria-label={label}>
+      <span className="inside-background" aria-hidden="true" />
+      {drawing ? (
+        <span
+          className="saved-art"
+          style={{ backgroundImage: `url(${drawing})` }}
+          aria-hidden="true"
+        />
+      ) : null}
+    </span>
   );
 }
 
@@ -110,16 +119,10 @@ function MonthCard({
       aria-haspopup="dialog"
     >
       <span className="month-square">
-        {drawing ? (
-          <span
-            className="saved-art"
-            style={{ backgroundImage: `url(${drawing})` }}
-            role="img"
-            aria-label={`Desen salvat pentru ${month.name}`}
-          />
-        ) : (
-          <PlaceholderArtwork compact />
-        )}
+        <InsideArtwork
+          drawing={drawing}
+          label={drawing ? `Desen salvat pentru ${month.name}` : `Fundal pentru ${month.name}`}
+        />
         <DoorPanels />
       </span>
       <span className="month-meta">
@@ -147,22 +150,14 @@ function DrawingStudio({
   const [isEraser, setIsEraser] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const paintCanvasBackground = (context: CanvasRenderingContext2D) => {
-    context.save();
-    context.globalCompositeOperation = "source-over";
-    context.fillStyle = CANVAS_BACKGROUND;
-    context.fillRect(0, 0, context.canvas.width, context.canvas.height);
-    context.restore();
-  };
-
   const restoreSnapshot = (snapshot?: string) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const context = canvas.getContext("2d");
     if (!context) return;
 
+    context.globalCompositeOperation = "source-over";
     context.clearRect(0, 0, canvas.width, canvas.height);
-    paintCanvasBackground(context);
     if (!snapshot) return;
 
     const image = new Image();
@@ -208,7 +203,8 @@ function DrawingStudio({
     context.moveTo(point.x, point.y);
     context.lineCap = "round";
     context.lineJoin = "round";
-    context.strokeStyle = isEraser ? CANVAS_BACKGROUND : color;
+    context.globalCompositeOperation = isEraser ? "destination-out" : "source-over";
+    context.strokeStyle = color;
     context.lineWidth = brushSize * point.scale;
   };
 
@@ -246,7 +242,6 @@ function DrawingStudio({
     if (!canvas || !context) return;
     historyRef.current.push(canvas.toDataURL("image/webp", 0.86));
     context.clearRect(0, 0, canvas.width, canvas.height);
-    paintCanvasBackground(context);
     setSaved(false);
   };
 
@@ -381,11 +376,7 @@ function FocusModal({
           </div>
 
           <div className="focus-card" aria-hidden="true">
-            {drawing ? (
-              <span className="saved-art" style={{ backgroundImage: `url(${drawing})` }} />
-            ) : (
-              <PlaceholderArtwork />
-            )}
+            <InsideArtwork drawing={drawing} label={`Interiorul lunii ${month.name}`} />
             <DoorPanels />
           </div>
 

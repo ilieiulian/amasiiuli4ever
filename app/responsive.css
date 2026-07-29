@@ -20,19 +20,6 @@
   .section-heading { display: block; margin-inline: 7px; }
   .section-instruction { max-width: 260px; margin-top: 22px; }
   .month-card:hover .month-square { transform: none; }
-  .art-placeholder--compact .placeholder-corners,
-  .art-placeholder--compact .placeholder-note { display: none; }
-  .art-placeholder--compact .placeholder-mark {
-    width: 22px;
-    height: 22px;
-    margin-bottom: 4px;
-    font-size: 0.85rem;
-  }
-  .art-placeholder--compact .placeholder-title {
-    max-width: 60px;
-    font-size: clamp(0.48rem, 2.1vw, 0.68rem);
-    line-height: 1.05;
-  }
   .placeholder-guide { grid-template-columns: 1fr; }
   footer { align-items: end; }
   .focus-overlay { align-items: start; padding: 0; background: var(--paper); }
@@ -52,8 +39,6 @@
     border-bottom: 1px solid var(--line);
   }
   .focus-card { width: min(72vw, 330px); }
-  .focus-card .art-placeholder .placeholder-title { font-size: 1rem; }
-  .focus-card .art-placeholder .placeholder-note { font-size: 0.5rem; }
   .focus-caption { margin-top: 22px; }
   .studio { padding: 38px 14px 32px; }
   .canvas-frame { padding: 5px; }
