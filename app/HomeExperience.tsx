@@ -71,7 +71,6 @@ function InsideArtwork({
 }) {
   return (
     <span className="inside-artwork" role="img" aria-label={label}>
-      <span className="inside-background" aria-hidden="true" />
       {drawing ? (
         <span
           className="saved-art"
@@ -121,7 +120,7 @@ function MonthCard({
       <span className="month-square">
         <InsideArtwork
           drawing={drawing}
-          label={drawing ? `Desen salvat pentru ${month.name}` : `Fundal pentru ${month.name}`}
+          label={drawing ? `Desen salvat pentru ${month.name}` : `Interior gol pentru ${month.name}`}
         />
         <DoorPanels />
       </span>

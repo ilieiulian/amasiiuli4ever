@@ -24,6 +24,8 @@ anului: mai intai `AAAA-LL.png`, apoi `AAAA-LL.jpg`.
 Imaginile lunilor reprezinta doar fata usii si pot avea fundal transparent.
 Site-ul pastreaza proportiile lor si le imparte intre cele doua jumatati.
 
-Fisierul `background.png` este fundalul comun din interiorul tuturor usilor.
-Desenele create in atelier sunt pastrate separat pentru fiecare luna si sunt
-afisate transparent deasupra acestui fundal; ele nu modifica textura usii.
+Fisierul `background.png` este baza comuna a fetelor usilor. Imaginea lunii
+este afisata peste el.
+
+Interiorul ramane gol pana cand este salvat un desen. Desenele create in
+atelier sunt pastrate separat pentru fiecare luna si nu modifica textura usii.
