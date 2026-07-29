@@ -6,13 +6,14 @@
   --rose-dark: #743444;
   --line: rgba(74, 52, 46, 0.2);
   --shadow: 0 24px 70px rgba(62, 37, 32, 0.18);
+  --site-blue: #9fc7dc;
 }
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body {
   margin: 0;
-  background: #ded0c3;
+  background: var(--site-blue);
   color: var(--ink);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   text-rendering: optimizeLegibility;
@@ -34,6 +35,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   --background-top: url("/texturi/fundal/background_top.png");
   --background-middle: url("/texturi/fundal/background_middle.png");
   --background-bottom: url("/texturi/fundal/bottom.jpg");
+  --top-middle-overlap: 2.2cqw;
   position: relative;
   isolation: isolate;
   container-type: inline-size;
@@ -42,7 +44,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   min-height: 100vh;
   margin: 0 auto;
   overflow: hidden;
-  background: #d8cec6;
+  background: var(--site-blue);
 }
 
 .repeating-background::before,
@@ -243,6 +245,9 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 }
 .month-row--top {
   min-height: 42.98cqw;
+}
+.month-row--top + .month-row--middle {
+  margin-top: calc(-1 * var(--top-middle-overlap));
 }
 .month-row--middle {
   min-height: 27cqw;
