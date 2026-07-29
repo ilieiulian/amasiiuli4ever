@@ -36,6 +36,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   --background-middle: url("/texturi/fundal/background_middle.png");
   --background-bottom: url("/texturi/fundal/bottom.jpg");
   --top-middle-overlap: 2.2cqw;
+  --middle-middle-overlap: 1.4cqw;
   position: relative;
   isolation: isolate;
   container-type: inline-size;
@@ -248,6 +249,9 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 }
 .month-row--top + .month-row--middle {
   margin-top: calc(-1 * var(--top-middle-overlap));
+}
+.month-row--middle + .month-row--middle {
+  margin-top: calc(-1 * var(--middle-middle-overlap));
 }
 .month-row--middle {
   min-height: 27cqw;
