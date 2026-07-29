@@ -462,6 +462,7 @@ export default function HomeExperience() {
               <div
                 className={`month-row month-row--${rowIndex === 0 ? "top" : "middle"}`}
                 key={row[0].id}
+                style={{ "--row-layer": monthRows.length - rowIndex } as CSSProperties}
               >
                 <div className="month-row-grid">
                   {row.map((month) => (

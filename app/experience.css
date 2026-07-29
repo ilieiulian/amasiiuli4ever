@@ -242,6 +242,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 }
 .month-row {
   position: relative;
+  z-index: var(--row-layer);
   width: 100%;
 }
 .month-row--top {
@@ -282,7 +283,9 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   padding-top: 1.8cqw;
 }
 .month-card {
+  width: 90%;
   min-width: 0;
+  justify-self: center;
   padding: 0;
   border: 0;
   background: transparent;
