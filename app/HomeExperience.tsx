@@ -12,10 +12,7 @@ type Month = {
   id: string;
   name: string;
   accent: string;
-  door: string;
   doorTextureMonthlyPng: string;
-  doorTextureJpg: string;
-  doorTexturePng: string;
 };
 
 const MONTH_NAMES = [
@@ -28,11 +25,9 @@ const MONTH_TEXTURE_FILES = [
   "iulie", "august", "septembrie", "octombrie", "noiembrie", "decembrie",
 ] as const;
 
-const MONTH_PALETTE = [
-  ["#cd6a4b", "#efb7a6"], ["#b84c67", "#e6a7b5"], ["#6f8e67", "#b7c8a8"],
-  ["#9b7359", "#dcc1a9"], ["#b57a8d", "#e8c1cd"], ["#c28b3e", "#e7c88e"],
-  ["#c9643e", "#eda07f"], ["#a75b3c", "#d9906e"], ["#717f5d", "#b8c29e"],
-  ["#9d5f3d", "#d99a72"], ["#746175", "#bcaabd"], ["#486e65", "#91b5ab"],
+const MONTH_ACCENTS = [
+  "#cd6a4b", "#b84c67", "#6f8e67", "#9b7359", "#b57a8d", "#c28b3e",
+  "#c9643e", "#a75b3c", "#717f5d", "#9d5f3d", "#746175", "#486e65",
 ] as const;
 
 function buildCompletedMonths(now: Date): Month[] {
@@ -44,15 +39,12 @@ function buildCompletedMonths(now: Date): Month[] {
     const year = cursor.getFullYear();
     const monthIndex = cursor.getMonth();
     const monthNumber = String(monthIndex + 1).padStart(2, "0");
-    const [accent, door] = MONTH_PALETTE[monthIndex];
+    const accent = MONTH_ACCENTS[monthIndex];
     result.push({
       id: `${year}-${monthNumber}`,
       name: `${MONTH_NAMES[monthIndex]} ${year}`,
       accent,
-      door,
       doorTextureMonthlyPng: `/texturi/usi/${MONTH_TEXTURE_FILES[monthIndex]}.png`,
-      doorTextureJpg: `/texturi/usi/${year}-${monthNumber}.jpg`,
-      doorTexturePng: `/texturi/usi/${year}-${monthNumber}.png`,
     });
     cursor.setMonth(cursor.getMonth() + 1);
   }
@@ -102,10 +94,7 @@ function MonthCard({
 }) {
   const cardStyle = {
     "--month-accent": month.accent,
-    "--door-color": month.door,
     "--door-texture-monthly-png": `url("${month.doorTextureMonthlyPng}")`,
-    "--door-texture-png": `url("${month.doorTexturePng}")`,
-    "--door-texture-jpg": `url("${month.doorTextureJpg}")`,
   } as CSSProperties;
 
   return (
@@ -344,10 +333,7 @@ function FocusModal({
 }) {
   const modalStyle = {
     "--month-accent": month.accent,
-    "--door-color": month.door,
     "--door-texture-monthly-png": `url("${month.doorTextureMonthlyPng}")`,
-    "--door-texture-png": `url("${month.doorTexturePng}")`,
-    "--door-texture-jpg": `url("${month.doorTextureJpg}")`,
   } as CSSProperties;
 
   return (

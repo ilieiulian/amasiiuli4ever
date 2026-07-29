@@ -7,6 +7,7 @@
   --line: rgba(74, 52, 46, 0.2);
   --shadow: 0 24px 70px rgba(62, 37, 32, 0.18);
   --site-blue: #9fc7dc;
+  --door-aspect-ratio: 1388 / 1303;
 }
 
 * { box-sizing: border-box; }
@@ -298,16 +299,14 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   position: relative;
   display: block;
   width: 100%;
-  aspect-ratio: 1;
-  overflow: hidden;
-  border: 1px solid rgba(59, 40, 35, 0.26);
-  background: var(--paper-light);
-  box-shadow: none;
+  aspect-ratio: var(--door-aspect-ratio);
+  overflow: visible;
+  border: 0;
+  background: transparent;
   transform: translateZ(0);
-  transition: transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 420ms ease;
+  transition: transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .month-card:hover .month-square, .month-card:focus-visible .month-square {
-  box-shadow: 0 16px 34px rgba(61, 38, 32, 0.18);
   transform: scale(1.015);
 }
 .inside-artwork,
@@ -317,7 +316,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 }
 .inside-artwork {
   overflow: hidden;
-  background: var(--paper-light);
+  background: transparent;
 }
 
 .saved-art {
@@ -338,24 +337,21 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   width: 50%;
   height: 100%;
   overflow: hidden;
-  background-color: var(--door-color);
   background-image:
     var(--door-texture-monthly-png),
-    var(--door-texture-png),
-    var(--door-texture-jpg),
     url("/texturi/usi/background.png");
   background-repeat: no-repeat;
-  background-size: 200% auto, 200% auto, 200% auto, 200% 100%;
+  background-size: 200% auto, 200% auto;
   transform-style: preserve-3d;
   backface-visibility: hidden;
   transition: transform 760ms cubic-bezier(0.18, 0.82, 0.2, 1);
 }
 .door-half--left {
-  background-position: left center, left center, left center, left center;
+  background-position: left center, left center;
   transform-origin: left center;
 }
 .door-half--right {
-  background-position: right center, right center, right center, right center;
+  background-position: right center, right center;
   transform-origin: right center;
 }
 .month-card:hover .door-half--left, .month-card:focus-visible .door-half--left { transform: rotateY(-72deg) translateZ(13px); }
@@ -486,12 +482,12 @@ footer a { color: inherit; text-decoration: none; }
 .focus-card {
   position: relative;
   width: min(100%, 410px);
-  aspect-ratio: 1;
+  aspect-ratio: var(--door-aspect-ratio);
   flex: 0 0 auto;
   overflow: visible;
-  border: 1px solid rgba(59, 40, 35, 0.24);
-  background: var(--paper-light);
-  box-shadow: var(--shadow);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
   perspective: 1100px;
 }
 .focus-card .door-layer { overflow: visible; }
