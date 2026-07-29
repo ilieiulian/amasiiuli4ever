@@ -445,6 +445,10 @@ export default function HomeExperience() {
   }, [activeMonthId]);
 
   const activeMonth = months.find((month) => month.id === activeMonthId);
+  const monthRows = Array.from(
+    { length: Math.ceil(months.length / 3) },
+    (_, rowIndex) => months.slice(rowIndex * 3, rowIndex * 3 + 3),
+  );
 
   const saveDrawing = (monthId: string, data: string) => {
     setDrawings((current) => {
@@ -464,13 +468,22 @@ export default function HomeExperience() {
         <section className="calendar-section" id="calendar" aria-label="Calendarul ușilor">
           <h1 className="sr-only">Calendarul ușilor, din martie 2025 până în prezent</h1>
           <div className="months-grid">
-            {months.map((month) => (
-              <MonthCard
-                key={month.id}
-                month={month}
-                drawing={drawings[month.id]}
-                onOpen={() => setActiveMonthId(month.id)}
-              />
+            {monthRows.map((row, rowIndex) => (
+              <div
+                className={`month-row month-row--${rowIndex === 0 ? "top" : "middle"}`}
+                key={row[0].id}
+              >
+                <div className="month-row-grid">
+                  {row.map((month) => (
+                    <MonthCard
+                      key={month.id}
+                      month={month}
+                      drawing={drawings[month.id]}
+                      onOpen={() => setActiveMonthId(month.id)}
+                    />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </section>

@@ -27,7 +27,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .site-shell {
   min-height: 100vh;
   overflow-x: clip;
-  padding-block: clamp(16px, 3vw, 34px);
+  padding-block: clamp(6px, 1vw, 16px);
 }
 
 .repeating-background {
@@ -36,20 +36,13 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   --background-bottom: url("/texturi/fundal/bottom.jpg");
   position: relative;
   isolation: isolate;
+  container-type: inline-size;
   width: 90%;
   max-width: 1500px;
   min-height: 100vh;
   margin: 0 auto;
   overflow: hidden;
-  background-color: var(--paper);
-  background-image:
-    var(--background-middle),
-    repeating-linear-gradient(0deg, transparent 0 34px, rgba(113, 82, 67, 0.08) 35px 36px);
-  background-position: center top, center top;
-  background-repeat: repeat-y, repeat;
-  background-size: 100% auto, 180px 180px;
-  border: 1px solid rgba(80, 57, 48, 0.24);
-  box-shadow: 0 18px 80px rgba(64, 43, 36, 0.15);
+  background: #d8cec6;
 }
 
 .repeating-background::before,
@@ -60,7 +53,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   left: 0;
   z-index: 0;
   pointer-events: none;
-  background-color: var(--paper);
+  background-color: transparent;
   background-position: center;
   background-repeat: no-repeat;
   background-size: 100% 100%;
@@ -68,18 +61,14 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 
 .repeating-background::before {
   top: 0;
-  height: clamp(130px, 20vw, 300px);
-  background-image:
-    var(--background-top),
-    linear-gradient(180deg, #ead9ca, transparent);
+  height: 42.98cqw;
+  background-image: var(--background-top);
 }
 
 .repeating-background::after {
   bottom: 0;
-  height: clamp(130px, 20vw, 300px);
-  background-image:
-    var(--background-bottom),
-    linear-gradient(0deg, #ead9ca, transparent);
+  height: 28cqw;
+  background-image: var(--background-bottom);
 }
 
 .repeating-background > * {
@@ -188,10 +177,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 
 .calendar-section {
   min-height: 100vh;
-  padding:
-    clamp(150px, 22vw, 320px)
-    clamp(12px, 5vw, 76px)
-    clamp(150px, 22vw, 320px);
+  padding: 0 0 20cqw;
 }
 .section-heading {
   display: flex;
@@ -249,9 +235,42 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 }
 
 .months-grid {
+  display: block;
+}
+.month-row {
+  position: relative;
+  width: 100%;
+}
+.month-row--top {
+  min-height: 42.98cqw;
+}
+.month-row--middle {
+  min-height: 27cqw;
+}
+.month-row--middle::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--background-middle);
+  background-position: center -49.76cqw;
+  background-repeat: no-repeat;
+  background-size: 100% 96.25cqw;
+}
+.month-row-grid {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(8px, 2.4vw, 34px);
+  column-gap: 9cqw;
+  padding-inline: 6cqw;
+}
+.month-row--top .month-row-grid {
+  padding-top: 17cqw;
+}
+.month-row--middle .month-row-grid {
+  padding-top: 1.8cqw;
 }
 .month-card {
   min-width: 0;
@@ -271,13 +290,13 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   overflow: hidden;
   border: 1px solid rgba(59, 40, 35, 0.26);
   background: var(--paper-light);
-  box-shadow: 0 12px 28px rgba(61, 42, 35, 0.08);
+  box-shadow: none;
   transform: translateZ(0);
   transition: transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 420ms ease;
 }
 .month-card:hover .month-square, .month-card:focus-visible .month-square {
-  box-shadow: 0 25px 48px rgba(61, 38, 32, 0.2);
-  transform: translateY(-7px) scale(1.015);
+  box-shadow: 0 16px 34px rgba(61, 38, 32, 0.18);
+  transform: scale(1.015);
 }
 .art-placeholder, .saved-art { position: absolute; inset: 0; }
 .saved-art {
@@ -335,7 +354,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
     var(--door-texture-png),
     var(--door-texture-jpg);
   background-repeat: no-repeat;
-  background-size: 200% 100%, 200% 100%, 200% 100%;
+  background-size: 200% auto, 200% auto, 200% auto;
   transform-style: preserve-3d;
   backface-visibility: hidden;
   transition: transform 760ms cubic-bezier(0.18, 0.82, 0.2, 1);
@@ -351,11 +370,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .month-card:hover .door-half--left, .month-card:focus-visible .door-half--left { transform: rotateY(-72deg) translateZ(13px); }
 .month-card:hover .door-half--right, .month-card:focus-visible .door-half--right { transform: rotateY(72deg) translateZ(13px); }
 .month-meta {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  padding: clamp(9px, 1.6vw, 16px) 2px 0;
+  display: none;
 }
 .month-name { font-family: Georgia, "Times New Roman", serif; font-size: clamp(0.78rem, 1.8vw, 1.28rem); font-weight: 600; }
 .month-state {
