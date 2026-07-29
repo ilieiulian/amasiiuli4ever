@@ -255,7 +255,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   margin-top: calc(-1 * var(--middle-middle-overlap));
 }
 .month-row--middle {
-  min-height: 27cqw;
+  min-height: 25.265cqw;
 }
 .month-row--middle::before {
   content: "";
@@ -264,9 +264,9 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   z-index: 0;
   pointer-events: none;
   background-image: var(--background-middle);
-  background-position: center -49.76cqw;
+  background-position: center top;
   background-repeat: no-repeat;
-  background-size: 100% 96.25cqw;
+  background-size: 100% auto;
 }
 .month-row-grid {
   position: relative;
