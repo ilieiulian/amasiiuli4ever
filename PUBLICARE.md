@@ -53,7 +53,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\publica-site.ps1
 ## Unde se incarca texturile
 
 - Fundal: `public/texturi/fundal/`
-- Usi: `public/texturi/usi/`, cu nume precum `2025-03.jpg`
+- Usi: `public/texturi/usi/`, cu numele lunilor, de exemplu `martie.png`
 
 Prima publicare Cloudflare va crea si o adresa `workers.dev`. Domeniul
 `amasiiuli4ever.com` poate fi conectat ulterior din setarile Worker-ului.

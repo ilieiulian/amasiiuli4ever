@@ -331,68 +331,25 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   overflow: hidden;
   background-color: var(--door-color);
   background-image:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.18), transparent 40%),
+    var(--door-texture-monthly-png),
     var(--door-texture-png),
     var(--door-texture-jpg);
   background-repeat: no-repeat;
-  background-size: 100% 100%, 200% 100%, 200% 100%;
-  border: 1px solid rgba(69, 43, 37, 0.32);
-  box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.18);
+  background-size: 200% 100%, 200% 100%, 200% 100%;
   transform-style: preserve-3d;
   backface-visibility: hidden;
   transition: transform 760ms cubic-bezier(0.18, 0.82, 0.2, 1);
 }
 .door-half--left {
-  background-position: center, left center, left center;
+  background-position: left center, left center, left center;
   transform-origin: left center;
 }
 .door-half--right {
-  background-position: center, right center, right center;
+  background-position: right center, right center, right center;
   transform-origin: right center;
 }
 .month-card:hover .door-half--left, .month-card:focus-visible .door-half--left { transform: rotateY(-72deg) translateZ(13px); }
 .month-card:hover .door-half--right, .month-card:focus-visible .door-half--right { transform: rotateY(72deg) translateZ(13px); }
-.door-line { position: absolute; inset: 7%; border: 1px solid rgba(78, 48, 42, 0.2); }
-.door-number {
-  position: absolute;
-  top: 50%;
-  color: rgba(62, 39, 35, 0.72);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(1.5rem, 5vw, 4rem);
-  transform: translateY(-50%);
-}
-.door-half--left .door-number { right: 7%; }
-.door-half--right .door-number { left: 7%; }
-.door-handle {
-  position: absolute;
-  top: 50%;
-  width: clamp(4px, 0.7vw, 8px);
-  height: clamp(4px, 0.7vw, 8px);
-  border: 1px solid rgba(62, 39, 35, 0.5);
-  border-radius: 50%;
-  background: #c69e65;
-  transform: translateY(-50%);
-}
-.door-half--left .door-handle { right: 6%; }
-.door-half--right .door-handle { left: 6%; }
-.open-hint {
-  position: absolute;
-  right: 8%;
-  bottom: 7%;
-  z-index: 3;
-  padding: 5px 8px;
-  border-radius: 99px;
-  background: rgba(255, 250, 243, 0.9);
-  color: var(--month-accent);
-  font-size: clamp(0.42rem, 0.8vw, 0.6rem);
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  opacity: 0;
-  text-transform: uppercase;
-  transform: translateY(7px);
-  transition: 260ms ease 150ms;
-}
-.month-card:hover .open-hint, .month-card:focus-visible .open-hint { opacity: 1; transform: translateY(0); }
 .month-meta {
   display: flex;
   align-items: baseline;
@@ -510,7 +467,7 @@ footer a { color: inherit; text-decoration: none; }
   gap: 16px;
   margin-bottom: 28px;
 }
-.focus-number { color: var(--month-accent); font-family: Georgia, "Times New Roman", serif; font-size: clamp(2rem, 4vw, 3.4rem); line-height: 1; }
+
 .focus-month p {
   margin: 0 0 4px;
   color: #826b63;
@@ -534,7 +491,6 @@ footer a { color: inherit; text-decoration: none; }
 .focus-card .door-layer { overflow: visible; }
 .focus-card .door-half--left { animation: focusDoorLeft 920ms cubic-bezier(0.16, 0.9, 0.24, 1) 360ms forwards; }
 .focus-card .door-half--right { animation: focusDoorRight 920ms cubic-bezier(0.16, 0.9, 0.24, 1) 360ms forwards; }
-.focus-card .door-number { font-size: clamp(2.8rem, 7vw, 5rem); }
 .focus-caption {
   max-width: 410px;
   margin: 28px 0 0;

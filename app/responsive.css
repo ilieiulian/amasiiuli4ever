@@ -35,7 +35,6 @@
     font-size: clamp(0.48rem, 2.1vw, 0.68rem);
     line-height: 1.05;
   }
-  .open-hint { display: none; }
   .month-meta { display: block; padding-top: 7px; }
   .month-name {
     display: block;
@@ -52,8 +51,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .door-number { font-size: clamp(1rem, 5vw, 1.5rem); }
-  .door-line { inset: 5%; }
   .placeholder-guide { grid-template-columns: 1fr; }
   footer { align-items: end; }
   .focus-overlay { align-items: start; padding: 0; background: var(--paper); }

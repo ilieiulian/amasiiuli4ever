@@ -11,9 +11,9 @@ import {
 type Month = {
   id: string;
   name: string;
-  number: string;
   accent: string;
   door: string;
+  doorTextureMonthlyPng: string;
   doorTextureJpg: string;
   doorTexturePng: string;
 };
@@ -21,6 +21,11 @@ type Month = {
 const MONTH_NAMES = [
   "Ianuarie", "Februarie", "Martie", "Aprilie", "Mai", "Iunie",
   "Iulie", "August", "Septembrie", "Octombrie", "Noiembrie", "Decembrie",
+] as const;
+
+const MONTH_TEXTURE_FILES = [
+  "ianuarie", "februarie", "martie", "aprilie", "mai", "iunie",
+  "iulie", "august", "septembrie", "octombrie", "noiembrie", "decembrie",
 ] as const;
 
 const MONTH_PALETTE = [
@@ -43,9 +48,9 @@ function buildCompletedMonths(now: Date): Month[] {
     result.push({
       id: `${year}-${monthNumber}`,
       name: `${MONTH_NAMES[monthIndex]} ${year}`,
-      number: monthNumber,
       accent,
       door,
+      doorTextureMonthlyPng: `/texturi/usi/${MONTH_TEXTURE_FILES[monthIndex]}.png`,
       doorTextureJpg: `/texturi/usi/${year}-${monthNumber}.jpg`,
       doorTexturePng: `/texturi/usi/${year}-${monthNumber}.png`,
     });
@@ -69,19 +74,11 @@ function PlaceholderArtwork({ compact = false }: { compact?: boolean }) {
   );
 }
 
-function DoorPanels({ number }: { number: string }) {
+function DoorPanels() {
   return (
     <span className="door-layer" aria-hidden="true">
-      <span className="door-half door-half--left">
-        <span className="door-line" />
-        <span className="door-number">{number.slice(0, 1)}</span>
-        <span className="door-handle" />
-      </span>
-      <span className="door-half door-half--right">
-        <span className="door-line" />
-        <span className="door-number">{number.slice(1)}</span>
-        <span className="door-handle" />
-      </span>
+      <span className="door-half door-half--left" />
+      <span className="door-half door-half--right" />
     </span>
   );
 }
@@ -98,6 +95,7 @@ function MonthCard({
   const cardStyle = {
     "--month-accent": month.accent,
     "--door-color": month.door,
+    "--door-texture-monthly-png": `url("${month.doorTextureMonthlyPng}")`,
     "--door-texture-png": `url("${month.doorTexturePng}")`,
     "--door-texture-jpg": `url("${month.doorTextureJpg}")`,
   } as CSSProperties;
@@ -122,8 +120,7 @@ function MonthCard({
         ) : (
           <PlaceholderArtwork compact />
         )}
-        <DoorPanels number={month.number} />
-        <span className="open-hint">Apasă</span>
+        <DoorPanels />
       </span>
       <span className="month-meta">
         <span className="month-name">{month.name}</span>
@@ -354,6 +351,7 @@ function FocusModal({
   const modalStyle = {
     "--month-accent": month.accent,
     "--door-color": month.door,
+    "--door-texture-monthly-png": `url("${month.doorTextureMonthlyPng}")`,
     "--door-texture-png": `url("${month.doorTexturePng}")`,
     "--door-texture-jpg": `url("${month.doorTextureJpg}")`,
   } as CSSProperties;
@@ -375,7 +373,7 @@ function FocusModal({
 
         <div className="focus-intro">
           <div className="focus-month">
-            <span className="focus-number">{month.number}</span>
+
             <div>
               <p>Capitolul nostru</p>
               <h2 id="focus-title">{month.name}</h2>
@@ -388,7 +386,7 @@ function FocusModal({
             ) : (
               <PlaceholderArtwork />
             )}
-            <DoorPanels number={month.number} />
+            <DoorPanels />
           </div>
 
           <p className="focus-caption">
