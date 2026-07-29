@@ -36,7 +36,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   --background-middle: url("/texturi/fundal/background_middle.png");
   --background-bottom: url("/texturi/fundal/bottom.jpg");
   --top-middle-overlap: 2.2cqw;
-  --middle-middle-overlap: 1.6cqw;
+  --middle-middle-overlap: 2,0cqw;
   position: relative;
   isolation: isolate;
   container-type: inline-size;
