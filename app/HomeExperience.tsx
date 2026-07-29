@@ -14,7 +14,8 @@ type Month = {
   number: string;
   accent: string;
   door: string;
-  doorTexture: string;
+  doorTextureJpg: string;
+  doorTexturePng: string;
 };
 
 const MONTH_NAMES = [
@@ -45,7 +46,8 @@ function buildCompletedMonths(now: Date): Month[] {
       number: monthNumber,
       accent,
       door,
-      doorTexture: `/texturi/usi/${year}-${monthNumber}.jpg`,
+      doorTextureJpg: `/texturi/usi/${year}-${monthNumber}.jpg`,
+      doorTexturePng: `/texturi/usi/${year}-${monthNumber}.png`,
     });
     cursor.setMonth(cursor.getMonth() + 1);
   }
@@ -96,7 +98,8 @@ function MonthCard({
   const cardStyle = {
     "--month-accent": month.accent,
     "--door-color": month.door,
-    "--door-texture": `url("${month.doorTexture}")`,
+    "--door-texture-png": `url("${month.doorTexturePng}")`,
+    "--door-texture-jpg": `url("${month.doorTextureJpg}")`,
   } as CSSProperties;
 
   return (
@@ -351,7 +354,8 @@ function FocusModal({
   const modalStyle = {
     "--month-accent": month.accent,
     "--door-color": month.door,
-    "--door-texture": `url("${month.doorTexture}")`,
+    "--door-texture-png": `url("${month.doorTexturePng}")`,
+    "--door-texture-jpg": `url("${month.doorTextureJpg}")`,
   } as CSSProperties;
 
   return (

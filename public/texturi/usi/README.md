@@ -1,15 +1,17 @@
-# Texturile ușilor
+# Texturile usilor
 
-Fiecare lună folosește o imagine separată, numită în formatul `AAAA-LL.jpg`.
-Calendarul începe cu:
+Fiecare luna foloseste o imagine separata, numita in formatul `AAAA-LL.png`
+sau `AAAA-LL.jpg`. Daca exista ambele variante, fisierul PNG are prioritate.
+Calendarul incepe cu:
 
-- `2025-03.jpg` pentru martie 2025
-- `2025-04.jpg` pentru aprilie 2025
-- continuă în același format până la ultima lună calendaristică încheiată
+- `2025-03.png` sau `2025-03.jpg` pentru martie 2025
+- `2025-04.png` sau `2025-04.jpg` pentru aprilie 2025
+- continua in acelasi format pana la ultima luna calendaristica incheiata
 
-Când o lună se încheie, site-ul adaugă automat noua ușă și caută textura cu
-anul și luna ei. De exemplu, la 1 august 2026 va căuta `2026-07.jpg`.
+Cand o luna se incheie, site-ul adauga automat noua usa si cauta textura cu
+anul si luna ei. De exemplu, la 1 august 2026 va cauta `2026-07.png`, apoi
+`2026-07.jpg` daca varianta PNG nu exista.
 
-Folosește imagini pătrate, de preferat minimum 1200 × 1200 px. Site-ul împarte
-automat fiecare imagine între jumătatea stângă și jumătatea dreaptă a ușii.
-Până când adaugi o imagine, ușa folosește culoarea ei de rezervă.
+Foloseste imagini patrate, de preferat minimum 1200 x 1200 px. Site-ul imparte
+automat fiecare imagine intre jumatatea stanga si jumatatea dreapta a usii.
+Pana cand adaugi o imagine, usa foloseste culoarea ei de rezerva.
