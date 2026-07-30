@@ -25,6 +25,8 @@ test("uses the public drawing API instead of browser-only storage", async () => 
   assert.match(experience, /const floodFill/);
   assert.match(experience, /const redo =/);
   assert.match(experience, /"eyedropper"/);
+  assert.doesNotMatch(experience, /"line"|"rectangle"|"ellipse"|"arrow"|"heart"|"star"/);
+  assert.doesNotMatch(experience, /13 unelte pentru desen/);
   assert.match(experience, /Record<string, PublicDrawing>/);
   assert.doesNotMatch(experience, /localStorage|STORAGE_KEY/);
   assert.match(css, /\.publication-fields/);
@@ -32,6 +34,7 @@ test("uses the public drawing API instead of browser-only storage", async () => 
   assert.match(css, /\.studio-toolbox/);
   assert.match(css, /\.tool-grid/);
   assert.match(css, /\.tool-actions/);
+  assert.doesNotMatch(css, /\.fill-toggle/);
   assert.match(css, /\.studio-body/);
   assert.match(css, /var\(--site-blue\)/);
   assert.match(css, /\.drawing-message/);

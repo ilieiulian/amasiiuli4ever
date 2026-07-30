@@ -60,7 +60,6 @@
   .drawing-message { padding: 7px 9px; font-size: 0.64rem; }
   .studio { padding: 14px 12px 22px; }
   .studio-heading { display: block; padding-right: 44px; }
-  .studio-tip { max-width: none; margin-top: 4px; text-align: left; }
   .studio-body { grid-template-columns: 1fr; gap: 13px; }
   .studio-workbench { width: min(100%, 560px); transform: none; }
   .studio-toolbox, .publication-fields { transform: none; }

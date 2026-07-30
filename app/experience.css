@@ -602,16 +602,6 @@ footer a { color: inherit; text-decoration: none; }
   letter-spacing: -0.03em;
   line-height: 1.05;
 }
-.studio-tip {
-  max-width: 260px;
-  margin: 0;
-  color: #43565b;
-  font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
-  font-size: 0.65rem;
-  line-height: 1.4;
-  text-align: right;
-  transform: rotate(-0.5deg);
-}
 .studio-body {
   display: grid;
   grid-template-columns: minmax(330px, 1fr) minmax(250px, 290px);
@@ -819,31 +809,6 @@ footer a { color: inherit; text-decoration: none; }
   font-weight: 650;
   text-align: right;
 }
-.fill-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  width: 100%;
-  min-height: 29px;
-  margin-top: 6px;
-  padding: 4px 8px;
-  border: 1.5px dashed var(--ink);
-  border-radius: 5px 9px 4px 7px;
-  background: transparent;
-  color: #5c4b46;
-  cursor: pointer;
-  font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
-  font-size: 0.51rem;
-  font-weight: 700;
-  transition: background 140ms ease, transform 140ms ease;
-}
-.fill-toggle:hover,
-.fill-toggle.is-active {
-  background: color-mix(in srgb, var(--month-accent) 18%, #fffdf9);
-  transform: rotate(-0.35deg);
-}
-.fill-toggle span { color: var(--month-accent); font-size: 0.8rem; }
 .tool-actions {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

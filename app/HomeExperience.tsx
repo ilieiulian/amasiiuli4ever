@@ -132,12 +132,6 @@ type DrawingTool =
   | "marker"
   | "spray"
   | "eraser"
-  | "line"
-  | "rectangle"
-  | "ellipse"
-  | "arrow"
-  | "heart"
-  | "star"
   | "fill"
   | "eyedropper";
 
@@ -153,12 +147,6 @@ const DRAWING_TOOLS: ReadonlyArray<{
   { id: "marker", label: "Marker", icon: "▰" },
   { id: "spray", label: "Spray", icon: "⁙" },
   { id: "eraser", label: "Gumă", icon: "◇" },
-  { id: "line", label: "Linie", icon: "╱" },
-  { id: "rectangle", label: "Dreptunghi", icon: "□" },
-  { id: "ellipse", label: "Cerc", icon: "○" },
-  { id: "arrow", label: "Săgeată", icon: "➜" },
-  { id: "heart", label: "Inimă", icon: "♡" },
-  { id: "star", label: "Stea", icon: "☆" },
   { id: "fill", label: "Umplere", icon: "▧" },
   { id: "eyedropper", label: "Pipetă", icon: "◉" },
 ];
@@ -169,14 +157,6 @@ const FREEHAND_TOOLS = new Set<DrawingTool>([
   "marker",
   "spray",
   "eraser",
-]);
-const SHAPE_TOOLS = new Set<DrawingTool>([
-  "line",
-  "rectangle",
-  "ellipse",
-  "arrow",
-  "heart",
-  "star",
 ]);
 
 function DrawingStudio({
@@ -197,15 +177,12 @@ function DrawingStudio({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isDrawingRef = useRef(false);
-  const shapeStartRef = useRef<CanvasPoint | null>(null);
-  const previewSnapshotRef = useRef<ImageData | null>(null);
   const historyRef = useRef<string[]>([]);
   const redoRef = useRef<string[]>([]);
   const [activeTool, setActiveTool] = useState<DrawingTool>("brush");
   const [color, setColor] = useState("#8f3d4f");
   const [brushSize, setBrushSize] = useState(12);
   const [opacity, setOpacity] = useState(100);
-  const [fillShapes, setFillShapes] = useState(false);
   const [historyState, setHistoryState] = useState({ undo: false, redo: false });
   const [importedFileName, setImportedFileName] = useState("");
   const [message, setMessage] = useState(initialMessage ?? "");
@@ -321,75 +298,6 @@ function DrawingStudio({
     resetContext(context);
   };
 
-  const drawShape = (
-    context: CanvasRenderingContext2D,
-    start: CanvasPoint,
-    end: CanvasPoint,
-  ) => {
-    configureTool(context, end, activeTool);
-    const x = Math.min(start.x, end.x);
-    const y = Math.min(start.y, end.y);
-    const width = Math.abs(end.x - start.x);
-    const height = Math.abs(end.y - start.y);
-    const shouldFill = fillShapes && ["rectangle", "ellipse", "heart", "star"].includes(activeTool);
-
-    context.beginPath();
-    if (activeTool === "line") {
-      context.moveTo(start.x, start.y);
-      context.lineTo(end.x, end.y);
-      context.stroke();
-    } else if (activeTool === "rectangle") {
-      if (shouldFill) context.fillRect(x, y, width, height);
-      else context.strokeRect(x, y, width, height);
-    } else if (activeTool === "ellipse") {
-      context.ellipse(x + width / 2, y + height / 2, width / 2, height / 2, 0, 0, Math.PI * 2);
-      shouldFill ? context.fill() : context.stroke();
-    } else if (activeTool === "arrow") {
-      const angle = Math.atan2(end.y - start.y, end.x - start.x);
-      const head = Math.max(12, context.lineWidth * 3.4);
-      context.moveTo(start.x, start.y);
-      context.lineTo(end.x, end.y);
-      context.stroke();
-      context.beginPath();
-      context.moveTo(end.x, end.y);
-      context.lineTo(
-        end.x - head * Math.cos(angle - Math.PI / 7),
-        end.y - head * Math.sin(angle - Math.PI / 7),
-      );
-      context.lineTo(
-        end.x - head * Math.cos(angle + Math.PI / 7),
-        end.y - head * Math.sin(angle + Math.PI / 7),
-      );
-      context.closePath();
-      context.fill();
-    } else if (activeTool === "heart") {
-      const centerX = x + width / 2;
-      context.moveTo(centerX, y + height);
-      context.bezierCurveTo(x - width * 0.08, y + height * 0.63, x, y + height * 0.22, x + width * 0.25, y + height * 0.22);
-      context.bezierCurveTo(x + width * 0.42, y + height * 0.22, centerX, y + height * 0.36, centerX, y + height * 0.36);
-      context.bezierCurveTo(centerX, y + height * 0.36, x + width * 0.58, y + height * 0.22, x + width * 0.75, y + height * 0.22);
-      context.bezierCurveTo(x + width, y + height * 0.22, x + width * 1.08, y + height * 0.63, centerX, y + height);
-      context.closePath();
-      shouldFill ? context.fill() : context.stroke();
-    } else if (activeTool === "star") {
-      const centerX = x + width / 2;
-      const centerY = y + height / 2;
-      const outerRadius = Math.max(1, Math.min(width, height) / 2);
-      const innerRadius = outerRadius * 0.44;
-      for (let pointIndex = 0; pointIndex < 10; pointIndex += 1) {
-        const radius = pointIndex % 2 === 0 ? outerRadius : innerRadius;
-        const angle = -Math.PI / 2 + (pointIndex * Math.PI) / 5;
-        const pointX = centerX + Math.cos(angle) * radius;
-        const pointY = centerY + Math.sin(angle) * radius;
-        if (pointIndex === 0) context.moveTo(pointX, pointY);
-        else context.lineTo(pointX, pointY);
-      }
-      context.closePath();
-      shouldFill ? context.fill() : context.stroke();
-    }
-    resetContext(context);
-  };
-
   const hexToRgba = (hex: string, alphaValue: number) => {
     const normalized = hex.replace("#", "");
     return {
@@ -491,12 +399,6 @@ function DrawingStudio({
 
     isDrawingRef.current = true;
     canvas.setPointerCapture(event.pointerId);
-    if (SHAPE_TOOLS.has(activeTool)) {
-      shapeStartRef.current = point;
-      previewSnapshotRef.current = context.getImageData(0, 0, canvas.width, canvas.height);
-      return;
-    }
-
     if (activeTool === "spray") {
       drawSpray(context, point);
       return;
@@ -516,13 +418,7 @@ function DrawingStudio({
     if (!canvas || !context) return;
     const point = getCanvasPoint(event);
 
-    if (SHAPE_TOOLS.has(activeTool)) {
-      const start = shapeStartRef.current;
-      const snapshot = previewSnapshotRef.current;
-      if (!start || !snapshot) return;
-      context.putImageData(snapshot, 0, 0);
-      drawShape(context, start, point);
-    } else if (activeTool === "spray") {
+    if (activeTool === "spray") {
       drawSpray(context, point);
     } else if (FREEHAND_TOOLS.has(activeTool)) {
       context.lineTo(point.x, point.y);
@@ -536,14 +432,7 @@ function DrawingStudio({
     if (!canvas || !context || !isDrawingRef.current) return;
     const point = getCanvasPoint(event);
 
-    if (SHAPE_TOOLS.has(activeTool)) {
-      const start = shapeStartRef.current;
-      const snapshot = previewSnapshotRef.current;
-      if (start && snapshot) {
-        context.putImageData(snapshot, 0, 0);
-        drawShape(context, start, point);
-      }
-    } else if (activeTool === "spray") {
+    if (activeTool === "spray") {
       drawSpray(context, point);
     } else {
       context.lineTo(point.x, point.y);
@@ -553,8 +442,6 @@ function DrawingStudio({
 
     resetContext(context);
     isDrawingRef.current = false;
-    shapeStartRef.current = null;
-    previewSnapshotRef.current = null;
     if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
     setSaved(false);
   };
@@ -687,7 +574,6 @@ function DrawingStudio({
           <p className="studio-kicker">Atelierul vostru</p>
           <h2>Creează luna {month.name}</h2>
         </div>
-        <p className="studio-tip">13 unelte pentru desen, forme, culoare și retușuri.</p>
       </div>
 
       <div className="studio-body">
@@ -777,15 +663,6 @@ function DrawingStudio({
               </label>
             </div>
 
-            <button
-              className={`fill-toggle${fillShapes ? " is-active" : ""}`}
-              type="button"
-              aria-pressed={fillShapes}
-              onClick={() => setFillShapes((value) => !value)}
-            >
-              <span aria-hidden="true">▧</span>
-              Forme pline
-            </button>
 
             <div className="tool-actions" aria-label="Istoric și curățare">
               <button className="history-button" type="button" onClick={undo} disabled={!historyState.undo}>
