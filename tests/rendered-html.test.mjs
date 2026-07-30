@@ -16,7 +16,9 @@ test("uses the public drawing API instead of browser-only storage", async () => 
 
   assert.match(experience, /fetch\("\/api\/drawings"/);
   assert.match(experience, /method:\s*"POST"/);
-  assert.match(experience, /Mesaj atașat \(opțional\)/);
+  assert.match(experience, /Mesaj 1 \(opțional\)/);
+  assert.match(experience, /Mesaj 2 \(opțional\)/);
+  assert.doesNotMatch(experience, /compactă, dar completă/);
   assert.match(experience, /type="password"/);
   assert.match(experience, /type="file"/);
   assert.match(experience, /accept="image\/png,image\/jpeg,image\/webp"/);
@@ -30,6 +32,9 @@ test("uses the public drawing API instead of browser-only storage", async () => 
   assert.match(experience, /Record<string, PublicDrawing>/);
   assert.doesNotMatch(experience, /localStorage|STORAGE_KEY/);
   assert.match(css, /\.publication-fields/);
+  assert.match(css, /\.message-pair/);
+  assert.match(css, /\.drawing-messages/);
+  assert.match(css, /\.month-square[\s\S]*width: 70%/);
   assert.match(css, /\.device-upload/);
   assert.match(css, /\.studio-toolbox/);
   assert.match(css, /\.tool-grid/);
@@ -40,7 +45,7 @@ test("uses the public drawing API instead of browser-only storage", async () => 
   assert.match(css, /\.drawing-message/);
 });
 
-test("protects writes and stores one image plus message per month in R2", async () => {
+test("protects writes and stores one image plus two messages per month in R2", async () => {
   const [storage, listRoute, drawingRoute, hosting, workflow, deployScript] =
     await Promise.all([
       read("lib/drawings-storage.ts"),
@@ -57,8 +62,12 @@ test("protects writes and stores one image plus message per month in R2", async 
   assert.match(storage, /MAX_MESSAGE_LENGTH = 300/);
   assert.match(listRoute, /include:\s*\["customMetadata"\]/);
   assert.match(listRoute, /imageUrl:/);
+  assert.match(listRoute, /customMetadata\?\.messageOne/);
+  assert.match(listRoute, /customMetadata\?\.message\s*\?\?/);
   assert.match(drawingRoute, /verifyUploadCode\(code\)/);
-  assert.match(drawingRoute, /customMetadata:\s*\{ message \}/);
+  assert.match(drawingRoute, /form\.get\("messageOne"\)/);
+  assert.match(drawingRoute, /form\.get\("messageTwo"\)/);
+  assert.match(drawingRoute, /customMetadata:\s*\{ messageOne, messageTwo \}/);
   assert.match(drawingRoute, /X-Content-Type-Options/);
   assert.match(workflow, /wrangler r2 bucket create amasiiuli4ever-drawings/);
   assert.match(deployScript, /binding:\s*"DRAWINGS"/);

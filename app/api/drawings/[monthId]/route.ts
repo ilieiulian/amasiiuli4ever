@@ -58,7 +58,8 @@ export async function POST(request: Request, context: RouteContext) {
   try {
     const form = await request.formData();
     const image = form.get("image");
-    const message = normalizeMessage(String(form.get("message") ?? ""));
+    const messageOne = normalizeMessage(String(form.get("messageOne") ?? form.get("message") ?? ""));
+    const messageTwo = normalizeMessage(String(form.get("messageTwo") ?? ""));
     const code = String(form.get("code") ?? "");
 
     if (!(await verifyUploadCode(code))) {
@@ -74,9 +75,9 @@ export async function POST(request: Request, context: RouteContext) {
         { status: 413 },
       );
     }
-    if (message.length > MAX_MESSAGE_LENGTH) {
+    if (messageOne.length > MAX_MESSAGE_LENGTH || messageTwo.length > MAX_MESSAGE_LENGTH) {
       return Response.json(
-        { error: `Mesajul poate avea cel mult ${MAX_MESSAGE_LENGTH} de caractere.` },
+        { error: `Fiecare mesaj poate avea cel mult ${MAX_MESSAGE_LENGTH} de caractere.` },
         { status: 400 },
       );
     }
@@ -95,14 +96,14 @@ export async function POST(request: Request, context: RouteContext) {
         contentType: image.type,
         cacheControl: "public, max-age=300, must-revalidate",
       },
-      customMetadata: { message },
+      customMetadata: { messageOne, messageTwo },
     });
 
     return Response.json(
       {
         drawing: {
           imageUrl: `/api/drawings/${monthId}?v=${encodeURIComponent(stored.etag)}`,
-          message,
+          messages: [messageOne, messageTwo],
           updatedAt: stored.uploaded.toISOString(),
         },
       },

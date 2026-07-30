@@ -10,7 +10,7 @@ export async function GET() {
     const bucket = getDrawingsBucket();
     const drawings: Record<
       string,
-      { imageUrl: string; message: string; updatedAt: string }
+      { imageUrl: string; messages: [string, string]; updatedAt: string }
     > = {};
     let cursor: string | undefined;
 
@@ -26,7 +26,10 @@ export async function GET() {
         if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(monthId)) continue;
         drawings[monthId] = {
           imageUrl: `/api/drawings/${monthId}?v=${encodeURIComponent(object.etag)}`,
-          message: object.customMetadata?.message ?? "",
+          messages: [
+            object.customMetadata?.messageOne ?? object.customMetadata?.message ?? "",
+            object.customMetadata?.messageTwo ?? "",
+          ],
           updatedAt: object.uploaded.toISOString(),
         };
       }

@@ -1,9 +1,8 @@
 @media (max-width: 1100px) {
   .focus-shell { grid-template-columns: minmax(175px, 205px) minmax(0, 1fr); }
   .focus-intro { padding-inline: 14px; }
-  .studio { padding-inline: 17px; }
-  .studio-body { grid-template-columns: minmax(300px, 1fr) minmax(235px, 265px); gap: 12px; }
-  .toolbox-heading span:last-child { display: none; }
+  .studio { padding-inline: 12px; }
+  .studio-body { grid-template-columns: minmax(300px, 1fr) minmax(265px, 300px); gap: 8px; }
 }
 
 @media (max-width: 900px) {
@@ -20,8 +19,8 @@
   .focus-month { grid-column: 1; margin: 0; align-self: end; }
   .focus-card { grid-column: 2; grid-row: 1 / span 3; width: 112px; }
   .focus-caption { grid-column: 1; margin-top: 2px; align-self: start; }
-  .drawing-message { grid-column: 1; margin-top: 2px; }
-  .studio-body { grid-template-columns: minmax(300px, 1fr) minmax(235px, 275px); }
+  .drawing-messages { grid-column: 1; margin-top: 2px; }
+  .studio-body { grid-template-columns: minmax(300px, 1fr) minmax(260px, 295px); gap: 8px; }
 }
 
 @media (max-width: 720px) {
@@ -61,10 +60,10 @@
   .studio { padding: 14px 12px 22px; }
   .studio-heading { display: block; padding-right: 44px; }
   .studio-body { grid-template-columns: 1fr; gap: 13px; }
-  .studio-workbench { width: min(100%, 560px); transform: none; }
+  .studio-workbench { width: min(100%, 600px); justify-self: center; transform: none; }
   .studio-toolbox, .publication-fields { transform: none; }
   .tool-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
-  .publication-fields { grid-template-columns: minmax(0, 1.25fr) minmax(155px, 0.75fr); }
+  .publication-fields { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 520px) {
@@ -85,6 +84,7 @@
   .control--range output { display: none; }
   .tool-grid { gap: 3px; }
   .tool-label { font-size: 0.39rem; }
+  .message-pair { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

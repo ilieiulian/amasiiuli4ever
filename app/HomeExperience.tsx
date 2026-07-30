@@ -18,7 +18,7 @@ type Month = {
 
 type PublicDrawing = {
   imageUrl: string;
-  message: string;
+  messages: [string, string];
   updatedAt: string;
 };
 
@@ -162,17 +162,17 @@ const FREEHAND_TOOLS = new Set<DrawingTool>([
 function DrawingStudio({
   month,
   initialDrawing,
-  initialMessage,
+  initialMessages,
   publicationCode,
   onPublicationCodeChange,
   onSave,
 }: {
   month: Month;
   initialDrawing?: string;
-  initialMessage?: string;
+  initialMessages?: [string, string];
   publicationCode: string;
   onPublicationCodeChange: (value: string) => void;
-  onSave: (image: Blob, message: string, code: string) => Promise<void>;
+  onSave: (image: Blob, messages: [string, string], code: string) => Promise<void>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -185,7 +185,8 @@ function DrawingStudio({
   const [opacity, setOpacity] = useState(100);
   const [historyState, setHistoryState] = useState({ undo: false, redo: false });
   const [importedFileName, setImportedFileName] = useState("");
-  const [message, setMessage] = useState(initialMessage ?? "");
+  const [messageOne, setMessageOne] = useState(initialMessages?.[0] ?? "");
+  const [messageTwo, setMessageTwo] = useState(initialMessages?.[1] ?? "");
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState("");
@@ -554,9 +555,9 @@ function DrawingStudio({
           0.9,
         );
       });
-      await onSave(image, message.trim(), publicationCode);
+      await onSave(image, [messageOne.trim(), messageTwo.trim()], publicationCode);
       setSaved(true);
-      setSaveFeedback("Desenul și mesajul sunt acum publice.");
+      setSaveFeedback("Desenul și cele două mesaje sunt acum publice.");
     } catch (error) {
       setSaved(false);
       setSaveFeedback(
@@ -602,7 +603,6 @@ function DrawingStudio({
           <div className="studio-toolbox" aria-label="Instrumentele atelierului">
             <div className="toolbox-heading">
               <span>Trusa de desen</span>
-              <span>compactă, dar completă</span>
             </div>
 
             <div className="tool-picker">
@@ -704,22 +704,41 @@ function DrawingStudio({
           </div>
 
           <div className="publication-fields">
-            <label className="publication-field">
-              <span>Mesaj atașat (opțional)</span>
-              <textarea
-                value={message}
-                maxLength={300}
-                rows={3}
-                placeholder="Scrie câteva cuvinte despre luna aceasta…"
-                onChange={(event) => {
-                  setMessage(event.target.value);
-                  setSaved(false);
-                }}
-              />
-              <small>{message.length}/300</small>
-            </label>
+            <div className="message-pair" aria-label="Mesajele atașate">
+              <label className="publication-field">
+                <span>Mesaj 1 (opțional)</span>
+                <textarea
+                  value={messageOne}
+                  maxLength={300}
+                  rows={2}
+                  placeholder="Primul mesaj…"
+                  aria-label="Primul mesaj atașat"
+                  onChange={(event) => {
+                    setMessageOne(event.target.value);
+                    setSaved(false);
+                  }}
+                />
+                <small>{messageOne.length}/300</small>
+              </label>
 
-            <label className="publication-field">
+              <label className="publication-field">
+                <span>Mesaj 2 (opțional)</span>
+                <textarea
+                  value={messageTwo}
+                  maxLength={300}
+                  rows={2}
+                  placeholder="Al doilea mesaj…"
+                  aria-label="Al doilea mesaj atașat"
+                  onChange={(event) => {
+                    setMessageTwo(event.target.value);
+                    setSaved(false);
+                  }}
+                />
+                <small>{messageTwo.length}/300</small>
+              </label>
+            </div>
+
+            <label className="publication-field publication-field--code">
               <span>Cod de publicare</span>
               <input
                 type="password"
@@ -767,7 +786,7 @@ function FocusModal({
   drawing?: PublicDrawing;
   publicationCode: string;
   onPublicationCodeChange: (value: string) => void;
-  onSave: (image: Blob, message: string, code: string) => Promise<void>;
+  onSave: (image: Blob, messages: [string, string], code: string) => Promise<void>;
   onClose: () => void;
 }) {
   const modalStyle = {
@@ -806,8 +825,16 @@ function FocusModal({
             <DoorPanels />
           </div>
 
-          {drawing?.message ? (
-            <p className="drawing-message">{drawing.message}</p>
+          {drawing?.messages.some(Boolean) ? (
+            <div className="drawing-messages" aria-label="Mesajele atașate">
+              {drawing.messages.map((message, index) =>
+                message ? (
+                  <p className="drawing-message" key={`message-${index}`}>
+                    {message}
+                  </p>
+                ) : null,
+              )}
+            </div>
           ) : null}
 
           <p className="focus-caption">
@@ -819,7 +846,7 @@ function FocusModal({
           key={month.id}
           month={month}
           initialDrawing={drawing?.imageUrl}
-          initialMessage={drawing?.message}
+          initialMessages={drawing?.messages}
           publicationCode={publicationCode}
           onPublicationCodeChange={onPublicationCodeChange}
           onSave={onSave}
@@ -895,12 +922,13 @@ export default function HomeExperience() {
   const saveDrawing = async (
     monthId: string,
     image: Blob,
-    message: string,
+    messages: [string, string],
     code: string,
   ) => {
     const form = new FormData();
     form.append("image", image, `${monthId}.webp`);
-    form.append("message", message);
+    form.append("messageOne", messages[0]);
+    form.append("messageTwo", messages[1]);
     form.append("code", code);
 
     const response = await fetch(`/api/drawings/${monthId}`, {
@@ -955,8 +983,8 @@ export default function HomeExperience() {
           drawing={drawings[activeMonth.id]}
           publicationCode={publicationCode}
           onPublicationCodeChange={setPublicationCode}
-          onSave={(image, message, code) =>
-            saveDrawing(activeMonth.id, image, message, code)
+          onSave={(image, messages, code) =>
+            saveDrawing(activeMonth.id, image, messages, code)
           }
           onClose={() => setActiveMonthId(null)}
         />
