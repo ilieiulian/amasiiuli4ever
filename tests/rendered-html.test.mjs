@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import test from "node:test";
 
 const root = new URL("../", import.meta.url);
@@ -31,6 +31,11 @@ test("uses the public drawing API instead of browser-only storage", async () => 
   assert.doesNotMatch(experience, /13 unelte pentru desen/);
   assert.match(experience, /Record<string, PublicDrawing>/);
   assert.doesNotMatch(experience, /localStorage|STORAGE_KEY/);
+  assert.match(experience, /indexedDB\.open/);
+  assert.match(experience, /DRAFT_STORE_NAME = "month-drafts"/);
+  assert.match(experience, /readDrawingDraft\(month\.id\)/);
+  assert.match(experience, /writeDrawingDraft\(month\.id, draft\)/);
+  assert.match(experience, /removeDrawingDraft\(month\.id\)/);
   assert.match(css, /\.publication-fields/);
   assert.match(css, /\.message-pair/);
   assert.match(css, /\.drawing-messages/);
@@ -74,4 +79,17 @@ test("protects writes and stores one image plus two messages per month in R2", a
   assert.match(workflow, /wrangler r2 bucket create amasiiuli4ever-drawings/);
   assert.match(deployScript, /binding:\s*"DRAWINGS"/);
   assert.match(deployScript, /bucket_name:\s*"amasiiuli4ever-drawings"/);
+});
+
+test("keeps the bottom background deployable on Cloudflare", async () => {
+  const [css, bottomBackground] = await Promise.all([
+    read("app/experience.css"),
+    stat(new URL("../public/texturi/fundal/background_bottom.png", import.meta.url)),
+  ]);
+
+  assert.match(css, /background_bottom\.png/);
+  assert.ok(
+    bottomBackground.size < 25 * 1024 * 1024,
+    "background_bottom.png must stay below Cloudflare's 25 MiB per-file limit",
+  );
 });

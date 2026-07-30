@@ -22,6 +22,79 @@ type PublicDrawing = {
   updatedAt: string;
 };
 
+type DrawingDraft = {
+  image: string;
+  messages: [string, string];
+  updatedAt: number;
+};
+
+const DRAFT_DB_NAME = "amasiiuli4ever-drafts";
+const DRAFT_STORE_NAME = "month-drafts";
+
+function openDraftDatabase(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    if (!("indexedDB" in window)) {
+      reject(new Error("Salvarea automata nu este disponibila in acest browser."));
+      return;
+    }
+
+    const request = window.indexedDB.open(DRAFT_DB_NAME, 1);
+    request.onupgradeneeded = () => {
+      const database = request.result;
+      if (!database.objectStoreNames.contains(DRAFT_STORE_NAME)) {
+        database.createObjectStore(DRAFT_STORE_NAME);
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () =>
+      reject(request.error ?? new Error("Atelierul nu poate deschide salvarea locala."));
+  });
+}
+
+async function readDrawingDraft(monthId: string): Promise<DrawingDraft | undefined> {
+  const database = await openDraftDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(DRAFT_STORE_NAME, "readonly");
+    const request = transaction.objectStore(DRAFT_STORE_NAME).get(monthId);
+    request.onsuccess = () => resolve(request.result as DrawingDraft | undefined);
+    request.onerror = () => reject(request.error ?? new Error("Progresul nu a putut fi citit."));
+    transaction.oncomplete = () => database.close();
+    transaction.onerror = () => database.close();
+  });
+}
+
+async function writeDrawingDraft(monthId: string, draft: DrawingDraft): Promise<void> {
+  const database = await openDraftDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(DRAFT_STORE_NAME, "readwrite");
+    transaction.objectStore(DRAFT_STORE_NAME).put(draft, monthId);
+    transaction.oncomplete = () => {
+      database.close();
+      resolve();
+    };
+    transaction.onerror = () => {
+      database.close();
+      reject(transaction.error ?? new Error("Progresul nu a putut fi salvat."));
+    };
+  });
+}
+
+async function removeDrawingDraft(monthId: string): Promise<void> {
+  const database = await openDraftDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(DRAFT_STORE_NAME, "readwrite");
+    transaction.objectStore(DRAFT_STORE_NAME).delete(monthId);
+    transaction.oncomplete = () => {
+      database.close();
+      resolve();
+    };
+    transaction.onerror = () => {
+      database.close();
+      reject(transaction.error ?? new Error("Progresul local nu a putut fi sters."));
+    };
+  });
+}
+
 const MONTH_NAMES = [
   "Ianuarie", "Februarie", "Martie", "Aprilie", "Mai", "Iunie",
   "Iulie", "August", "Septembrie", "Octombrie", "Noiembrie", "Decembrie",
@@ -179,6 +252,14 @@ function DrawingStudio({
   const isDrawingRef = useRef(false);
   const historyRef = useRef<string[]>([]);
   const redoRef = useRef<string[]>([]);
+  const draftTimerRef = useRef<number | null>(null);
+  const draftReadyRef = useRef(false);
+  const draftDirtyRef = useRef(false);
+  const draftVersionRef = useRef(0);
+  const messageDraftRef = useRef<[string, string]>([
+    initialMessages?.[0] ?? "",
+    initialMessages?.[1] ?? "",
+  ]);
   const [activeTool, setActiveTool] = useState<DrawingTool>("brush");
   const [color, setColor] = useState("#8f3d4f");
   const [brushSize, setBrushSize] = useState(12);
@@ -204,22 +285,33 @@ function DrawingStudio({
     context.setLineDash([]);
   };
 
-  const restoreSnapshot = (snapshot?: string) => {
+  const restoreSnapshot = (snapshot?: string, onRestored?: () => void) => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      onRestored?.();
+      return;
+    }
     const context = canvas.getContext("2d");
-    if (!context) return;
+    if (!context) {
+      onRestored?.();
+      return;
+    }
 
     resetContext(context);
     context.clearRect(0, 0, canvas.width, canvas.height);
-    if (!snapshot) return;
+    if (!snapshot) {
+      onRestored?.();
+      return;
+    }
 
     const image = new Image();
     image.onload = () => {
       resetContext(context);
       context.clearRect(0, 0, canvas.width, canvas.height);
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      onRestored?.();
     };
+    image.onerror = () => onRestored?.();
     image.src = snapshot;
   };
 
@@ -232,15 +324,81 @@ function DrawingStudio({
     syncHistoryState();
   };
 
+  const persistDraft = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !draftReadyRef.current || !draftDirtyRef.current) return;
+
+    const version = draftVersionRef.current;
+    const draft: DrawingDraft = {
+      image: canvas.toDataURL("image/webp", 0.82),
+      messages: messageDraftRef.current,
+      updatedAt: Date.now(),
+    };
+
+    try {
+      await writeDrawingDraft(month.id, draft);
+      if (draftVersionRef.current === version) draftDirtyRef.current = false;
+    } catch {
+      // The studio remains usable when private browsing blocks IndexedDB.
+    }
+  };
+
+  const scheduleDraftSave = () => {
+    if (!draftReadyRef.current) return;
+    draftDirtyRef.current = true;
+    draftVersionRef.current += 1;
+    if (draftTimerRef.current !== null) window.clearTimeout(draftTimerRef.current);
+    draftTimerRef.current = window.setTimeout(() => {
+      draftTimerRef.current = null;
+      void persistDraft();
+    }, 350);
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    let cancelled = false;
     canvas.width = 600;
     canvas.height = 600;
-    restoreSnapshot(initialDrawing);
+
+    const loadDraft = async () => {
+      if (cancelled) return;
+      try {
+        const draft = await readDrawingDraft(month.id);
+        if (cancelled) return;
+        if (draft) {
+          messageDraftRef.current = draft.messages;
+          setMessageOne(draft.messages[0]);
+          setMessageTwo(draft.messages[1]);
+          restoreSnapshot(draft.image);
+          setSaveFeedback("Progresul nesalvat a fost recuperat.");
+        }
+      } catch {
+        // Fall back to the published drawing if local storage is unavailable.
+      } finally {
+        if (!cancelled) draftReadyRef.current = true;
+      }
+    };
+
+    restoreSnapshot(initialDrawing, () => void loadDraft());
+
+    return () => {
+      cancelled = true;
+      if (draftTimerRef.current !== null) {
+        window.clearTimeout(draftTimerRef.current);
+        draftTimerRef.current = null;
+      }
+      if (draftDirtyRef.current) void persistDraft();
+    };
     // The studio remounts for every selected month.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    messageDraftRef.current = [messageOne, messageTwo];
+    scheduleDraftSave();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messageOne, messageTwo]);
 
   const getCanvasPoint = (event: ReactPointerEvent<HTMLCanvasElement>): CanvasPoint => {
     const canvas = canvasRef.current;
@@ -395,11 +553,13 @@ function DrawingStudio({
     if (activeTool === "fill") {
       floodFill(context, point);
       setSaved(false);
+      scheduleDraftSave();
       return;
     }
 
     isDrawingRef.current = true;
     canvas.setPointerCapture(event.pointerId);
+    scheduleDraftSave();
     if (activeTool === "spray") {
       drawSpray(context, point);
       return;
@@ -445,6 +605,7 @@ function DrawingStudio({
     isDrawingRef.current = false;
     if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
     setSaved(false);
+    scheduleDraftSave();
   };
 
   const undo = () => {
@@ -452,7 +613,7 @@ function DrawingStudio({
     const snapshot = historyRef.current.pop();
     if (!canvas || !snapshot) return;
     redoRef.current.push(canvas.toDataURL("image/png"));
-    restoreSnapshot(snapshot);
+    restoreSnapshot(snapshot, scheduleDraftSave);
     syncHistoryState();
     setSaved(false);
   };
@@ -462,7 +623,7 @@ function DrawingStudio({
     const snapshot = redoRef.current.pop();
     if (!canvas || !snapshot) return;
     historyRef.current.push(canvas.toDataURL("image/png"));
-    restoreSnapshot(snapshot);
+    restoreSnapshot(snapshot, scheduleDraftSave);
     syncHistoryState();
     setSaved(false);
   };
@@ -476,6 +637,7 @@ function DrawingStudio({
     context.clearRect(0, 0, canvas.width, canvas.height);
     setImportedFileName("");
     setSaved(false);
+    scheduleDraftSave();
   };
 
   const importImage = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -522,6 +684,7 @@ function DrawingStudio({
       setImportedFileName(file.name);
       setActiveTool("brush");
       setSaved(false);
+      scheduleDraftSave();
       setSaveFeedback("Imaginea a fost adăugată. Poți desena peste ea înainte de publicare.");
     } catch (error) {
       historyRef.current.pop();
@@ -556,6 +719,12 @@ function DrawingStudio({
         );
       });
       await onSave(image, [messageOne.trim(), messageTwo.trim()], publicationCode);
+      if (draftTimerRef.current !== null) {
+        window.clearTimeout(draftTimerRef.current);
+        draftTimerRef.current = null;
+      }
+      draftDirtyRef.current = false;
+      await removeDrawingDraft(month.id).catch(() => undefined);
       setSaved(true);
       setSaveFeedback("Desenul și cele două mesaje sunt acum publice.");
     } catch (error) {
@@ -767,7 +936,7 @@ function DrawingStudio({
           </button>
           <p className="save-note" aria-live="polite">
             {saveFeedback ||
-              "Imaginea publicată va fi vizibilă tuturor, pe orice dispozitiv."}
+              "Progresul este salvat automat pe acest dispozitiv. Publicarea îl face vizibil tuturor."}
           </p>
         </div>
       </div>
