@@ -57,6 +57,8 @@ test("uses the public drawing API instead of browser-only storage", async () => 
   assert.match(css, /\.site-shell\s*\{[\s\S]*padding: clamp\(6px, 1vw, 16px\) 0 0/);
   assert.doesNotMatch(css, /\.site-shell\s*\{[^}]*min-height/);
   assert.doesNotMatch(css, /\.repeating-background\s*\{[^}]*min-height/);
+  assert.match(css, /\.calendar-section\s*\{\s*padding: 0;\s*\}/);
+  assert.doesNotMatch(css, /\.calendar-section\s*\{[^}]*min-height/);
 });
 
 test("protects writes and stores one image plus two messages per month in R2", async () => {

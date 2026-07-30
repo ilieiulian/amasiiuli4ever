@@ -172,8 +172,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .hero-link:hover span { transform: translateY(4px); }
 
 .calendar-section {
-  min-height: 100vh;
-  padding: 0 0 20cqw;
+  padding: 0;
 }
 .section-heading {
   display: flex;
