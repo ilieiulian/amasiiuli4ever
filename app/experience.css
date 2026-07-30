@@ -35,7 +35,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .repeating-background {
   --background-top: url("/texturi/fundal/background_top.png");
   --background-middle: url("/texturi/fundal/background_middle.png");
-  --background-bottom: url("/texturi/fundal/bottom.jpg");
+  --background-bottom: url("/texturi/fundal/background_bottom.png");
   --top-middle-overlap: 2.2cqw;
   --middle-middle-overlap: 1.4cqw;
   position: relative;
