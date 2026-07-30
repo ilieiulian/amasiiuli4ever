@@ -6,6 +6,8 @@
   .studio-tip { max-width: none; margin-top: 7px; text-align: left; }
   .studio-controls { grid-template-columns: 1fr 1fr 1fr; }
   .control--range { grid-column: span 2; }
+  .device-upload { grid-template-columns: auto minmax(0, 1fr); }
+  .import-button { grid-column: 1 / -1; }
 }
 
 @media (max-width: 680px) {
@@ -41,18 +43,25 @@
   .focus-card { width: min(72vw, 330px); }
   .focus-caption { margin-top: 22px; }
   .studio { padding: 38px 14px 32px; }
+  .studio-workbench { padding: 8px; }
   .canvas-frame { padding: 5px; }
+  .studio-toolbox { padding: 10px; }
   .studio-controls { grid-template-columns: repeat(3, 1fr); }
   .publication-fields { grid-template-columns: 1fr; }
   .control { min-width: 0; }
   .control--color { grid-column: span 1; }
   .control--range { grid-column: span 2; }
   .tool-button { padding-inline: 6px; }
+  .device-upload { grid-template-columns: auto minmax(0, 1fr); }
+  .import-button { width: 100%; }
 }
 
 @media (max-width: 390px) {
   .studio-controls { gap: 5px; }
-  .control span { display: none; }
+  .control { padding-inline: 7px; }
+  .control--color > span { display: none; }
+  .control--range output { display: none; }
+  .toolbox-heading span:last-child { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

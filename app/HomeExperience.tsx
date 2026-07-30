@@ -4,6 +4,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type ChangeEvent,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
@@ -141,11 +142,13 @@ function DrawingStudio({
   onSave: (image: Blob, message: string, code: string) => Promise<void>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const isDrawingRef = useRef(false);
   const historyRef = useRef<string[]>([]);
   const [color, setColor] = useState("#8f3d4f");
   const [brushSize, setBrushSize] = useState(12);
   const [isEraser, setIsEraser] = useState(false);
+  const [importedFileName, setImportedFileName] = useState("");
   const [message, setMessage] = useState(initialMessage ?? "");
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -243,7 +246,65 @@ function DrawingStudio({
     if (!canvas || !context) return;
     historyRef.current.push(canvas.toDataURL("image/webp", 0.86));
     context.clearRect(0, 0, canvas.width, canvas.height);
+    setImportedFileName("");
     setSaved(false);
+  };
+
+  const importImage = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setSaveFeedback("Alege un fișier imagine.");
+      return;
+    }
+    if (file.size > 30 * 1024 * 1024) {
+      setSaveFeedback("Imaginea este prea mare. Alege una de maximum 30 MB.");
+      return;
+    }
+
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+
+    historyRef.current.push(canvas.toDataURL("image/webp", 0.86));
+    if (historyRef.current.length > 24) historyRef.current.shift();
+
+    const objectUrl = URL.createObjectURL(file);
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => {
+          const scale = Math.min(
+            canvas.width / image.naturalWidth,
+            canvas.height / image.naturalHeight,
+          );
+          const width = image.naturalWidth * scale;
+          const height = image.naturalHeight * scale;
+          const x = (canvas.width - width) / 2;
+          const y = (canvas.height - height) / 2;
+
+          context.globalCompositeOperation = "source-over";
+          context.clearRect(0, 0, canvas.width, canvas.height);
+          context.drawImage(image, x, y, width, height);
+          resolve();
+        };
+        image.onerror = () => reject(new Error("Imaginea nu a putut fi deschisă."));
+        image.src = objectUrl;
+      });
+      setImportedFileName(file.name);
+      setIsEraser(false);
+      setSaved(false);
+      setSaveFeedback("Imaginea a fost adăugată. Poți desena peste ea înainte de publicare.");
+    } catch (error) {
+      historyRef.current.pop();
+      setSaveFeedback(
+        error instanceof Error ? error.message : "Imaginea nu a putut fi adăugată.",
+      );
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
   };
 
   const saveCanvas = async () => {
@@ -285,68 +346,106 @@ function DrawingStudio({
       <div className="studio-heading">
         <div>
           <p className="studio-kicker">Atelierul vostru</p>
-          <h2>Desenează luna {month.name}</h2>
+          <h2>Creează luna {month.name}</h2>
         </div>
-        <p className="studio-tip">Folosește degetul, mouse-ul sau stylus-ul.</p>
+        <p className="studio-tip">Desenează sau pornește de la o imagine din dispozitiv.</p>
       </div>
 
-      <div className="canvas-frame">
-        <canvas
-          ref={canvasRef}
-          className="drawing-canvas"
-          aria-label={`Pânză de desen pentru luna ${month.name}`}
-          onPointerDown={startDrawing}
-          onPointerMove={draw}
-          onPointerUp={stopDrawing}
-          onPointerCancel={stopDrawing}
-          onPointerLeave={(event) => {
-            if (event.buttons === 0) stopDrawing(event);
-          }}
-        />
-      </div>
-
-      <div className="studio-controls">
-        <label className="control control--color">
-          <span>Culoare</span>
-          <input
-            type="color"
-            value={color}
-            onChange={(event) => {
-              setColor(event.target.value);
-              setIsEraser(false);
+      <div className="studio-workbench">
+        <div className="canvas-meta" aria-hidden="true">
+          <span>Pânză pătrată</span>
+          <span>600 × 600 px</span>
+        </div>
+        <div className="canvas-frame">
+          <canvas
+            ref={canvasRef}
+            className="drawing-canvas"
+            aria-label={`Pânză de desen pentru luna ${month.name}`}
+            onPointerDown={startDrawing}
+            onPointerMove={draw}
+            onPointerUp={stopDrawing}
+            onPointerCancel={stopDrawing}
+            onPointerLeave={(event) => {
+              if (event.buttons === 0) stopDrawing(event);
             }}
-            aria-label="Alege culoarea pensulei"
           />
-        </label>
-
-        <label className="control control--range">
-          <span>Grosime</span>
-          <input
-            type="range"
-            min="3"
-            max="36"
-            value={brushSize}
-            onChange={(event) => setBrushSize(Number(event.target.value))}
-            aria-label="Grosimea pensulei"
-          />
-        </label>
-
-        <button
-          className={`tool-button${isEraser ? " is-active" : ""}`}
-          type="button"
-          onClick={() => setIsEraser((value) => !value)}
-          aria-pressed={isEraser}
-        >
-          <span aria-hidden="true">◇</span> Gumă
-        </button>
-        <button className="tool-button" type="button" onClick={undo}>
-          <span aria-hidden="true">↶</span> Undo
-        </button>
-        <button className="tool-button" type="button" onClick={clearCanvas}>
-          <span aria-hidden="true">×</span> Șterge
-        </button>
+        </div>
       </div>
 
+      <div className="studio-toolbox" aria-label="Instrumentele atelierului">
+        <div className="toolbox-heading">
+          <span>Instrumente</span>
+          <span>deget · mouse · stylus</span>
+        </div>
+        <div className="studio-controls">
+          <label className="control control--color">
+            <span>Culoare</span>
+            <input
+              type="color"
+              value={color}
+              onChange={(event) => {
+                setColor(event.target.value);
+                setIsEraser(false);
+              }}
+              aria-label="Alege culoarea pensulei"
+            />
+          </label>
+
+          <label className="control control--range">
+            <span>Grosime</span>
+            <input
+              type="range"
+              min="3"
+              max="36"
+              value={brushSize}
+              onChange={(event) => setBrushSize(Number(event.target.value))}
+              aria-label="Grosimea pensulei"
+            />
+            <output>{brushSize}px</output>
+          </label>
+
+          <button
+            className={`tool-button${isEraser ? " is-active" : ""}`}
+            type="button"
+            onClick={() => setIsEraser((value) => !value)}
+            aria-pressed={isEraser}
+          >
+            <span aria-hidden="true">◇</span> Gumă
+          </button>
+          <button className="tool-button" type="button" onClick={undo}>
+            <span aria-hidden="true">↶</span> Înapoi
+          </button>
+          <button className="tool-button" type="button" onClick={clearCanvas}>
+            <span aria-hidden="true">×</span> Șterge
+          </button>
+        </div>
+
+        <div className="device-upload">
+          <span className="device-upload-mark" aria-hidden="true">＋</span>
+          <div className="device-upload-copy">
+            <span className="device-upload-label">Imagine din dispozitiv</span>
+            <span className="device-upload-status" aria-live="polite">
+              {importedFileName || "PNG, JPG sau WebP · maximum 30 MB"}
+            </span>
+          </div>
+          <button
+            className="import-button"
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Alege imagine
+          </button>
+          <input
+            ref={fileInputRef}
+            className="file-input"
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            onChange={importImage}
+            tabIndex={-1}
+            aria-hidden="true"
+          />
+        </div>
+      </div>
       <div className="publication-fields">
         <label className="publication-field">
           <span>Mesaj atașat (opțional)</span>

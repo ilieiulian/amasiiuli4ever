@@ -18,9 +18,14 @@ test("uses the public drawing API instead of browser-only storage", async () => 
   assert.match(experience, /method:\s*"POST"/);
   assert.match(experience, /Mesaj atașat \(opțional\)/);
   assert.match(experience, /type="password"/);
+  assert.match(experience, /type="file"/);
+  assert.match(experience, /accept="image\/png,image\/jpeg,image\/webp"/);
+  assert.match(experience, /const importImage = async/);
   assert.match(experience, /Record<string, PublicDrawing>/);
   assert.doesNotMatch(experience, /localStorage|STORAGE_KEY/);
   assert.match(css, /\.publication-fields/);
+  assert.match(css, /\.device-upload/);
+  assert.match(css, /\.studio-toolbox/);
   assert.match(css, /\.drawing-message/);
 });
 
