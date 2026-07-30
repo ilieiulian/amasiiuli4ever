@@ -126,6 +126,59 @@ function MonthCard({
   );
 }
 
+type DrawingTool =
+  | "brush"
+  | "pencil"
+  | "marker"
+  | "spray"
+  | "eraser"
+  | "line"
+  | "rectangle"
+  | "ellipse"
+  | "arrow"
+  | "heart"
+  | "star"
+  | "fill"
+  | "eyedropper";
+
+type CanvasPoint = { x: number; y: number; scale: number };
+
+const DRAWING_TOOLS: ReadonlyArray<{
+  id: DrawingTool;
+  label: string;
+  icon: string;
+}> = [
+  { id: "brush", label: "Pensulă", icon: "✎" },
+  { id: "pencil", label: "Creion", icon: "✐" },
+  { id: "marker", label: "Marker", icon: "▰" },
+  { id: "spray", label: "Spray", icon: "⁙" },
+  { id: "eraser", label: "Gumă", icon: "◇" },
+  { id: "line", label: "Linie", icon: "╱" },
+  { id: "rectangle", label: "Dreptunghi", icon: "□" },
+  { id: "ellipse", label: "Cerc", icon: "○" },
+  { id: "arrow", label: "Săgeată", icon: "➜" },
+  { id: "heart", label: "Inimă", icon: "♡" },
+  { id: "star", label: "Stea", icon: "☆" },
+  { id: "fill", label: "Umplere", icon: "▧" },
+  { id: "eyedropper", label: "Pipetă", icon: "◉" },
+];
+
+const FREEHAND_TOOLS = new Set<DrawingTool>([
+  "brush",
+  "pencil",
+  "marker",
+  "spray",
+  "eraser",
+]);
+const SHAPE_TOOLS = new Set<DrawingTool>([
+  "line",
+  "rectangle",
+  "ellipse",
+  "arrow",
+  "heart",
+  "star",
+]);
+
 function DrawingStudio({
   month,
   initialDrawing,
@@ -144,15 +197,34 @@ function DrawingStudio({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isDrawingRef = useRef(false);
+  const shapeStartRef = useRef<CanvasPoint | null>(null);
+  const previewSnapshotRef = useRef<ImageData | null>(null);
   const historyRef = useRef<string[]>([]);
+  const redoRef = useRef<string[]>([]);
+  const [activeTool, setActiveTool] = useState<DrawingTool>("brush");
   const [color, setColor] = useState("#8f3d4f");
   const [brushSize, setBrushSize] = useState(12);
-  const [isEraser, setIsEraser] = useState(false);
+  const [opacity, setOpacity] = useState(100);
+  const [fillShapes, setFillShapes] = useState(false);
+  const [historyState, setHistoryState] = useState({ undo: false, redo: false });
   const [importedFileName, setImportedFileName] = useState("");
   const [message, setMessage] = useState(initialMessage ?? "");
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState("");
+
+  const syncHistoryState = () => {
+    setHistoryState({
+      undo: historyRef.current.length > 0,
+      redo: redoRef.current.length > 0,
+    });
+  };
+
+  const resetContext = (context: CanvasRenderingContext2D) => {
+    context.globalAlpha = 1;
+    context.globalCompositeOperation = "source-over";
+    context.setLineDash([]);
+  };
 
   const restoreSnapshot = (snapshot?: string) => {
     const canvas = canvasRef.current;
@@ -160,15 +232,26 @@ function DrawingStudio({
     const context = canvas.getContext("2d");
     if (!context) return;
 
-    context.globalCompositeOperation = "source-over";
+    resetContext(context);
     context.clearRect(0, 0, canvas.width, canvas.height);
     if (!snapshot) return;
 
     const image = new Image();
     image.onload = () => {
+      resetContext(context);
+      context.clearRect(0, 0, canvas.width, canvas.height);
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
     };
     image.src = snapshot;
+  };
+
+  const recordSnapshot = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    historyRef.current.push(canvas.toDataURL("image/png"));
+    if (historyRef.current.length > 24) historyRef.current.shift();
+    redoRef.current = [];
+    syncHistoryState();
   };
 
   useEffect(() => {
@@ -181,7 +264,7 @@ function DrawingStudio({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const getCanvasPoint = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+  const getCanvasPoint = (event: ReactPointerEvent<HTMLCanvasElement>): CanvasPoint => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0, scale: 1 };
     const bounds = canvas.getBoundingClientRect();
@@ -192,24 +275,238 @@ function DrawingStudio({
     };
   };
 
+  const configureTool = (
+    context: CanvasRenderingContext2D,
+    point: CanvasPoint,
+    tool: DrawingTool,
+  ) => {
+    resetContext(context);
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.strokeStyle = color;
+    context.fillStyle = color;
+
+    if (tool === "eraser") {
+      context.globalCompositeOperation = "destination-out";
+      context.lineWidth = brushSize * point.scale;
+      return;
+    }
+
+    context.globalAlpha = opacity / 100;
+    if (tool === "pencil") {
+      context.lineWidth = Math.max(1, brushSize * 0.3 * point.scale);
+    } else if (tool === "marker") {
+      context.globalAlpha *= 0.3;
+      context.lineWidth = brushSize * 2.2 * point.scale;
+    } else {
+      context.lineWidth = brushSize * point.scale;
+    }
+  };
+
+  const drawSpray = (context: CanvasRenderingContext2D, point: CanvasPoint) => {
+    configureTool(context, point, "spray");
+    const radius = Math.max(4, brushSize * 1.55 * point.scale);
+    const dots = Math.max(12, Math.round(brushSize * 1.6));
+    const dotSize = Math.max(1, point.scale * 0.85);
+    for (let index = 0; index < dots; index += 1) {
+      const angle = Math.random() * Math.PI * 2;
+      const distance = Math.sqrt(Math.random()) * radius;
+      context.fillRect(
+        point.x + Math.cos(angle) * distance,
+        point.y + Math.sin(angle) * distance,
+        dotSize,
+        dotSize,
+      );
+    }
+    resetContext(context);
+  };
+
+  const drawShape = (
+    context: CanvasRenderingContext2D,
+    start: CanvasPoint,
+    end: CanvasPoint,
+  ) => {
+    configureTool(context, end, activeTool);
+    const x = Math.min(start.x, end.x);
+    const y = Math.min(start.y, end.y);
+    const width = Math.abs(end.x - start.x);
+    const height = Math.abs(end.y - start.y);
+    const shouldFill = fillShapes && ["rectangle", "ellipse", "heart", "star"].includes(activeTool);
+
+    context.beginPath();
+    if (activeTool === "line") {
+      context.moveTo(start.x, start.y);
+      context.lineTo(end.x, end.y);
+      context.stroke();
+    } else if (activeTool === "rectangle") {
+      if (shouldFill) context.fillRect(x, y, width, height);
+      else context.strokeRect(x, y, width, height);
+    } else if (activeTool === "ellipse") {
+      context.ellipse(x + width / 2, y + height / 2, width / 2, height / 2, 0, 0, Math.PI * 2);
+      shouldFill ? context.fill() : context.stroke();
+    } else if (activeTool === "arrow") {
+      const angle = Math.atan2(end.y - start.y, end.x - start.x);
+      const head = Math.max(12, context.lineWidth * 3.4);
+      context.moveTo(start.x, start.y);
+      context.lineTo(end.x, end.y);
+      context.stroke();
+      context.beginPath();
+      context.moveTo(end.x, end.y);
+      context.lineTo(
+        end.x - head * Math.cos(angle - Math.PI / 7),
+        end.y - head * Math.sin(angle - Math.PI / 7),
+      );
+      context.lineTo(
+        end.x - head * Math.cos(angle + Math.PI / 7),
+        end.y - head * Math.sin(angle + Math.PI / 7),
+      );
+      context.closePath();
+      context.fill();
+    } else if (activeTool === "heart") {
+      const centerX = x + width / 2;
+      context.moveTo(centerX, y + height);
+      context.bezierCurveTo(x - width * 0.08, y + height * 0.63, x, y + height * 0.22, x + width * 0.25, y + height * 0.22);
+      context.bezierCurveTo(x + width * 0.42, y + height * 0.22, centerX, y + height * 0.36, centerX, y + height * 0.36);
+      context.bezierCurveTo(centerX, y + height * 0.36, x + width * 0.58, y + height * 0.22, x + width * 0.75, y + height * 0.22);
+      context.bezierCurveTo(x + width, y + height * 0.22, x + width * 1.08, y + height * 0.63, centerX, y + height);
+      context.closePath();
+      shouldFill ? context.fill() : context.stroke();
+    } else if (activeTool === "star") {
+      const centerX = x + width / 2;
+      const centerY = y + height / 2;
+      const outerRadius = Math.max(1, Math.min(width, height) / 2);
+      const innerRadius = outerRadius * 0.44;
+      for (let pointIndex = 0; pointIndex < 10; pointIndex += 1) {
+        const radius = pointIndex % 2 === 0 ? outerRadius : innerRadius;
+        const angle = -Math.PI / 2 + (pointIndex * Math.PI) / 5;
+        const pointX = centerX + Math.cos(angle) * radius;
+        const pointY = centerY + Math.sin(angle) * radius;
+        if (pointIndex === 0) context.moveTo(pointX, pointY);
+        else context.lineTo(pointX, pointY);
+      }
+      context.closePath();
+      shouldFill ? context.fill() : context.stroke();
+    }
+    resetContext(context);
+  };
+
+  const hexToRgba = (hex: string, alphaValue: number) => {
+    const normalized = hex.replace("#", "");
+    return {
+      red: Number.parseInt(normalized.slice(0, 2), 16),
+      green: Number.parseInt(normalized.slice(2, 4), 16),
+      blue: Number.parseInt(normalized.slice(4, 6), 16),
+      alpha: Math.round(alphaValue * 2.55),
+    };
+  };
+
+  const floodFill = (context: CanvasRenderingContext2D, point: CanvasPoint) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    const startX = Math.max(0, Math.min(canvas.width - 1, Math.floor(point.x)));
+    const startY = Math.max(0, Math.min(canvas.height - 1, Math.floor(point.y)));
+    const startIndex = (startY * canvas.width + startX) * 4;
+    const target = [data[startIndex], data[startIndex + 1], data[startIndex + 2], data[startIndex + 3]];
+    const replacement = hexToRgba(color, opacity);
+
+    if (
+      target[0] === replacement.red &&
+      target[1] === replacement.green &&
+      target[2] === replacement.blue &&
+      target[3] === replacement.alpha
+    ) return;
+
+    const matchesTarget = (index: number) =>
+      data[index] === target[0] &&
+      data[index + 1] === target[1] &&
+      data[index + 2] === target[2] &&
+      data[index + 3] === target[3];
+    const stack: number[] = [];
+    const paintAndQueue = (index: number) => {
+      data[index] = replacement.red;
+      data[index + 1] = replacement.green;
+      data[index + 2] = replacement.blue;
+      data[index + 3] = replacement.alpha;
+      stack.push(index);
+    };
+
+    paintAndQueue(startIndex);
+    while (stack.length > 0) {
+      const index = stack.pop();
+      if (index === undefined) break;
+      const pixel = index / 4;
+      const pixelX = pixel % canvas.width;
+      const neighbors = [
+        pixelX > 0 ? index - 4 : -1,
+        pixelX < canvas.width - 1 ? index + 4 : -1,
+        pixel >= canvas.width ? index - canvas.width * 4 : -1,
+        pixel < canvas.width * (canvas.height - 1) ? index + canvas.width * 4 : -1,
+      ];
+      for (const neighbor of neighbors) {
+        if (neighbor >= 0 && matchesTarget(neighbor)) paintAndQueue(neighbor);
+      }
+    }
+    context.putImageData(imageData, 0, 0);
+  };
+
+  const sampleColor = (context: CanvasRenderingContext2D, point: CanvasPoint) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const sampleX = Math.max(0, Math.min(canvas.width - 1, Math.floor(point.x)));
+    const sampleY = Math.max(0, Math.min(canvas.height - 1, Math.floor(point.y)));
+    const pixel = context.getImageData(sampleX, sampleY, 1, 1).data;
+    if (pixel[3] === 0) {
+      setSaveFeedback("Zona aleasă este transparentă. Alege un punct colorat.");
+      return;
+    }
+    const pickedColor = `#${[pixel[0], pixel[1], pixel[2]]
+      .map((value) => value.toString(16).padStart(2, "0"))
+      .join("")}`;
+    setColor(pickedColor);
+    setOpacity(Math.max(1, Math.round((pixel[3] / 255) * 100)));
+    setActiveTool("brush");
+    setSaveFeedback(`Culoarea ${pickedColor.toUpperCase()} a fost aleasă.`);
+  };
+
   const startDrawing = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d");
     if (!canvas || !context) return;
-
-    historyRef.current.push(canvas.toDataURL("image/webp", 0.86));
-    if (historyRef.current.length > 24) historyRef.current.shift();
-
     const point = getCanvasPoint(event);
+
+    if (activeTool === "eyedropper") {
+      sampleColor(context, point);
+      return;
+    }
+
+    recordSnapshot();
+    if (activeTool === "fill") {
+      floodFill(context, point);
+      setSaved(false);
+      return;
+    }
+
     isDrawingRef.current = true;
     canvas.setPointerCapture(event.pointerId);
+    if (SHAPE_TOOLS.has(activeTool)) {
+      shapeStartRef.current = point;
+      previewSnapshotRef.current = context.getImageData(0, 0, canvas.width, canvas.height);
+      return;
+    }
+
+    if (activeTool === "spray") {
+      drawSpray(context, point);
+      return;
+    }
+
+    configureTool(context, point, activeTool);
     context.beginPath();
     context.moveTo(point.x, point.y);
-    context.lineCap = "round";
-    context.lineJoin = "round";
-    context.globalCompositeOperation = isEraser ? "destination-out" : "source-over";
-    context.strokeStyle = color;
-    context.lineWidth = brushSize * point.scale;
+    context.lineTo(point.x + 0.01, point.y + 0.01);
+    context.stroke();
   };
 
   const draw = (event: ReactPointerEvent<HTMLCanvasElement>) => {
@@ -218,25 +515,67 @@ function DrawingStudio({
     const context = canvas?.getContext("2d");
     if (!canvas || !context) return;
     const point = getCanvasPoint(event);
-    context.lineTo(point.x, point.y);
-    context.stroke();
+
+    if (SHAPE_TOOLS.has(activeTool)) {
+      const start = shapeStartRef.current;
+      const snapshot = previewSnapshotRef.current;
+      if (!start || !snapshot) return;
+      context.putImageData(snapshot, 0, 0);
+      drawShape(context, start, point);
+    } else if (activeTool === "spray") {
+      drawSpray(context, point);
+    } else if (FREEHAND_TOOLS.has(activeTool)) {
+      context.lineTo(point.x, point.y);
+      context.stroke();
+    }
   };
 
   const stopDrawing = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d");
     if (!canvas || !context || !isDrawingRef.current) return;
-    context.closePath();
-    isDrawingRef.current = false;
-    if (canvas.hasPointerCapture(event.pointerId)) {
-      canvas.releasePointerCapture(event.pointerId);
+    const point = getCanvasPoint(event);
+
+    if (SHAPE_TOOLS.has(activeTool)) {
+      const start = shapeStartRef.current;
+      const snapshot = previewSnapshotRef.current;
+      if (start && snapshot) {
+        context.putImageData(snapshot, 0, 0);
+        drawShape(context, start, point);
+      }
+    } else if (activeTool === "spray") {
+      drawSpray(context, point);
+    } else {
+      context.lineTo(point.x, point.y);
+      context.stroke();
+      context.closePath();
     }
+
+    resetContext(context);
+    isDrawingRef.current = false;
+    shapeStartRef.current = null;
+    previewSnapshotRef.current = null;
+    if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
     setSaved(false);
   };
 
   const undo = () => {
+    const canvas = canvasRef.current;
     const snapshot = historyRef.current.pop();
-    if (snapshot) restoreSnapshot(snapshot);
+    if (!canvas || !snapshot) return;
+    redoRef.current.push(canvas.toDataURL("image/png"));
+    restoreSnapshot(snapshot);
+    syncHistoryState();
+    setSaved(false);
+  };
+
+  const redo = () => {
+    const canvas = canvasRef.current;
+    const snapshot = redoRef.current.pop();
+    if (!canvas || !snapshot) return;
+    historyRef.current.push(canvas.toDataURL("image/png"));
+    restoreSnapshot(snapshot);
+    syncHistoryState();
     setSaved(false);
   };
 
@@ -244,7 +583,8 @@ function DrawingStudio({
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d");
     if (!canvas || !context) return;
-    historyRef.current.push(canvas.toDataURL("image/webp", 0.86));
+    recordSnapshot();
+    resetContext(context);
     context.clearRect(0, 0, canvas.width, canvas.height);
     setImportedFileName("");
     setSaved(false);
@@ -268,9 +608,7 @@ function DrawingStudio({
     const context = canvas?.getContext("2d");
     if (!canvas || !context) return;
 
-    historyRef.current.push(canvas.toDataURL("image/webp", 0.86));
-    if (historyRef.current.length > 24) historyRef.current.shift();
-
+    recordSnapshot();
     const objectUrl = URL.createObjectURL(file);
     try {
       await new Promise<void>((resolve, reject) => {
@@ -285,7 +623,7 @@ function DrawingStudio({
           const x = (canvas.width - width) / 2;
           const y = (canvas.height - height) / 2;
 
-          context.globalCompositeOperation = "source-over";
+          resetContext(context);
           context.clearRect(0, 0, canvas.width, canvas.height);
           context.drawImage(image, x, y, width, height);
           resolve();
@@ -294,11 +632,12 @@ function DrawingStudio({
         image.src = objectUrl;
       });
       setImportedFileName(file.name);
-      setIsEraser(false);
+      setActiveTool("brush");
       setSaved(false);
       setSaveFeedback("Imaginea a fost adăugată. Poți desena peste ea înainte de publicare.");
     } catch (error) {
       historyRef.current.pop();
+      syncHistoryState();
       setSaveFeedback(
         error instanceof Error ? error.message : "Imaginea nu a putut fi adăugată.",
       );
@@ -348,14 +687,14 @@ function DrawingStudio({
           <p className="studio-kicker">Atelierul vostru</p>
           <h2>Creează luna {month.name}</h2>
         </div>
-        <p className="studio-tip">Desenează sau pornește de la o imagine din dispozitiv.</p>
+        <p className="studio-tip">13 unelte pentru desen, forme, culoare și retușuri.</p>
       </div>
 
       <div className="studio-body">
         <div className="studio-workbench">
           <div className="canvas-meta" aria-hidden="true">
             <span>Foaie de lucru</span>
-            <span>600 × 600 px</span>
+            <span>{DRAWING_TOOLS.find((tool) => tool.id === activeTool)?.label} · {opacity}%</span>
           </div>
           <div className="canvas-frame">
             <canvas
@@ -376,48 +715,86 @@ function DrawingStudio({
         <div className="studio-sidebar">
           <div className="studio-toolbox" aria-label="Instrumentele atelierului">
             <div className="toolbox-heading">
-              <span>Instrumente</span>
-              <span>deget · mouse · stylus</span>
+              <span>Trusa de desen</span>
+              <span>compactă, dar completă</span>
             </div>
+
+            <div className="tool-picker">
+              <p className="tool-picker-label">Alege unealta</p>
+              <div className="tool-grid">
+                {DRAWING_TOOLS.map((tool) => (
+                  <button
+                    key={tool.id}
+                    className={`tool-button${activeTool === tool.id ? " is-active" : ""}`}
+                    type="button"
+                    title={tool.label}
+                    aria-label={`Unealta ${tool.label}`}
+                    aria-pressed={activeTool === tool.id}
+                    onClick={() => setActiveTool(tool.id)}
+                  >
+                    <span className="tool-icon" aria-hidden="true">{tool.icon}</span>
+                    <span className="tool-label">{tool.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="studio-controls">
               <label className="control control--color">
                 <span>Culoare</span>
                 <input
                   type="color"
                   value={color}
-                  onChange={(event) => {
-                    setColor(event.target.value);
-                    setIsEraser(false);
-                  }}
-                  aria-label="Alege culoarea pensulei"
+                  onChange={(event) => setColor(event.target.value)}
+                  aria-label="Alege culoarea"
                 />
               </label>
 
               <label className="control control--range">
-                <span>Grosime</span>
+                <span>Mărime</span>
                 <input
                   type="range"
-                  min="3"
-                  max="36"
+                  min="2"
+                  max="40"
                   value={brushSize}
                   onChange={(event) => setBrushSize(Number(event.target.value))}
-                  aria-label="Grosimea pensulei"
+                  aria-label="Mărimea uneltei"
                 />
                 <output>{brushSize}px</output>
               </label>
 
-              <button
-                className={`tool-button${isEraser ? " is-active" : ""}`}
-                type="button"
-                onClick={() => setIsEraser((value) => !value)}
-                aria-pressed={isEraser}
-              >
-                <span aria-hidden="true">◇</span> Gumă
-              </button>
-              <button className="tool-button" type="button" onClick={undo}>
+              <label className="control control--opacity">
+                <span>Opacitate</span>
+                <input
+                  type="range"
+                  min="5"
+                  max="100"
+                  value={opacity}
+                  onChange={(event) => setOpacity(Number(event.target.value))}
+                  aria-label="Opacitatea culorii"
+                />
+                <output>{opacity}%</output>
+              </label>
+            </div>
+
+            <button
+              className={`fill-toggle${fillShapes ? " is-active" : ""}`}
+              type="button"
+              aria-pressed={fillShapes}
+              onClick={() => setFillShapes((value) => !value)}
+            >
+              <span aria-hidden="true">▧</span>
+              Forme pline
+            </button>
+
+            <div className="tool-actions" aria-label="Istoric și curățare">
+              <button className="history-button" type="button" onClick={undo} disabled={!historyState.undo}>
                 <span aria-hidden="true">↶</span> Înapoi
               </button>
-              <button className="tool-button" type="button" onClick={clearCanvas}>
+              <button className="history-button" type="button" onClick={redo} disabled={!historyState.redo}>
+                <span aria-hidden="true">↷</span> Refă
+              </button>
+              <button className="history-button" type="button" onClick={clearCanvas}>
                 <span aria-hidden="true">×</span> Șterge
               </button>
             </div>

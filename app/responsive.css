@@ -64,6 +64,7 @@
   .studio-body { grid-template-columns: 1fr; gap: 13px; }
   .studio-workbench { width: min(100%, 560px); transform: none; }
   .studio-toolbox, .publication-fields { transform: none; }
+  .tool-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
   .publication-fields { grid-template-columns: minmax(0, 1.25fr) minmax(155px, 0.75fr); }
 }
 
@@ -74,6 +75,7 @@
   .canvas-meta { font-size: 0.5rem; }
   .publication-fields { grid-template-columns: 1fr; }
   .device-upload { grid-template-columns: auto minmax(0, 1fr); }
+  .tool-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }
 
 @media (max-width: 390px) {
@@ -82,7 +84,8 @@
   .control { padding-inline: 6px; }
   .control--color > span { display: none; }
   .control--range output { display: none; }
-  .tool-button { font-size: 0.53rem; }
+  .tool-grid { gap: 3px; }
+  .tool-label { font-size: 0.39rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

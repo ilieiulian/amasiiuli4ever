@@ -21,11 +21,17 @@ test("uses the public drawing API instead of browser-only storage", async () => 
   assert.match(experience, /type="file"/);
   assert.match(experience, /accept="image\/png,image\/jpeg,image\/webp"/);
   assert.match(experience, /const importImage = async/);
+  assert.match(experience, /const DRAWING_TOOLS/);
+  assert.match(experience, /const floodFill/);
+  assert.match(experience, /const redo =/);
+  assert.match(experience, /"eyedropper"/);
   assert.match(experience, /Record<string, PublicDrawing>/);
   assert.doesNotMatch(experience, /localStorage|STORAGE_KEY/);
   assert.match(css, /\.publication-fields/);
   assert.match(css, /\.device-upload/);
   assert.match(css, /\.studio-toolbox/);
+  assert.match(css, /\.tool-grid/);
+  assert.match(css, /\.tool-actions/);
   assert.match(css, /\.studio-body/);
   assert.match(css, /var\(--site-blue\)/);
   assert.match(css, /\.drawing-message/);
