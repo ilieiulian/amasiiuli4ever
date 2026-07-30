@@ -1,16 +1,30 @@
-@media (max-width: 900px) {
-  .focus-shell { grid-template-columns: 0.8fr 1.2fr; }
-  .focus-intro { padding-inline: 24px; }
-  .studio { padding-inline: 24px; }
-  .studio-heading { display: block; }
-  .studio-tip { max-width: none; margin-top: 7px; text-align: left; }
-  .studio-controls { grid-template-columns: 1fr 1fr 1fr; }
-  .control--range { grid-column: span 2; }
-  .device-upload { grid-template-columns: auto minmax(0, 1fr); }
-  .import-button { grid-column: 1 / -1; }
+@media (max-width: 1100px) {
+  .focus-shell { grid-template-columns: minmax(175px, 205px) minmax(0, 1fr); }
+  .focus-intro { padding-inline: 14px; }
+  .studio { padding-inline: 17px; }
+  .studio-body { grid-template-columns: minmax(300px, 1fr) minmax(235px, 265px); gap: 12px; }
+  .toolbox-heading span:last-child { display: none; }
 }
 
-@media (max-width: 680px) {
+@media (max-width: 900px) {
+  .focus-shell { display: block; }
+  .focus-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 118px;
+    gap: 8px 16px;
+    min-height: auto;
+    padding: 18px 66px 16px 20px;
+    border-right: 0;
+    border-bottom: 2px dashed rgba(56, 43, 40, 0.36);
+  }
+  .focus-month { grid-column: 1; margin: 0; align-self: end; }
+  .focus-card { grid-column: 2; grid-row: 1 / span 3; width: 112px; }
+  .focus-caption { grid-column: 1; margin-top: 2px; align-self: start; }
+  .drawing-message { grid-column: 1; margin-top: 2px; }
+  .studio-body { grid-template-columns: minmax(300px, 1fr) minmax(235px, 275px); }
+}
+
+@media (max-width: 720px) {
   .site-shell { padding-block: 9px; }
   .repeating-background { width: 90%; }
   .site-header { min-height: 68px; padding-inline: 11px; }
@@ -24,44 +38,51 @@
   .month-card:hover .month-square { transform: none; }
   .placeholder-guide { grid-template-columns: 1fr; }
   footer { align-items: end; }
-  .focus-overlay { align-items: start; padding: 0; background: var(--paper); }
+
+  .focus-overlay { align-items: start; padding: 0; background: var(--site-blue); }
   .focus-shell {
-    display: block;
     width: 100%;
     min-height: 100dvh;
     max-height: none;
     border: 0;
-    animation-duration: 560ms;
+    border-radius: 0;
+    box-shadow: none;
+    animation-duration: 500ms;
   }
-  .close-button { position: fixed; top: 12px; right: 12px; }
+  .focus-shell::before { display: none; }
+  .close-button { position: fixed; top: 10px; right: 10px; }
   .focus-intro {
-    min-height: auto;
-    padding: 58px 44px 38px;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
+    grid-template-columns: minmax(0, 1fr) 90px;
+    padding: 14px 58px 13px 14px;
   }
-  .focus-card { width: min(72vw, 330px); }
-  .focus-caption { margin-top: 22px; }
-  .studio { padding: 38px 14px 32px; }
-  .studio-workbench { padding: 8px; }
-  .canvas-frame { padding: 5px; }
-  .studio-toolbox { padding: 10px; }
-  .studio-controls { grid-template-columns: repeat(3, 1fr); }
+  .focus-card { width: 86px; }
+  .focus-caption { font-size: 0.65rem; }
+  .drawing-message { padding: 7px 9px; font-size: 0.64rem; }
+  .studio { padding: 14px 12px 22px; }
+  .studio-heading { display: block; padding-right: 44px; }
+  .studio-tip { max-width: none; margin-top: 4px; text-align: left; }
+  .studio-body { grid-template-columns: 1fr; gap: 13px; }
+  .studio-workbench { width: min(100%, 560px); transform: none; }
+  .studio-toolbox, .publication-fields { transform: none; }
+  .publication-fields { grid-template-columns: minmax(0, 1.25fr) minmax(155px, 0.75fr); }
+}
+
+@media (max-width: 520px) {
+  .focus-intro { grid-template-columns: minmax(0, 1fr) 72px; gap: 6px 10px; }
+  .focus-card { width: 68px; }
+  .focus-caption { margin-top: 0; }
+  .canvas-meta { font-size: 0.5rem; }
   .publication-fields { grid-template-columns: 1fr; }
-  .control { min-width: 0; }
-  .control--color { grid-column: span 1; }
-  .control--range { grid-column: span 2; }
-  .tool-button { padding-inline: 6px; }
   .device-upload { grid-template-columns: auto minmax(0, 1fr); }
-  .import-button { width: 100%; }
 }
 
 @media (max-width: 390px) {
+  .studio { padding-inline: 9px; }
   .studio-controls { gap: 5px; }
-  .control { padding-inline: 7px; }
+  .control { padding-inline: 6px; }
   .control--color > span { display: none; }
   .control--range output { display: none; }
-  .toolbox-heading span:last-child { display: none; }
+  .tool-button { font-size: 0.53rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

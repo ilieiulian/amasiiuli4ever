@@ -351,148 +351,153 @@ function DrawingStudio({
         <p className="studio-tip">Desenează sau pornește de la o imagine din dispozitiv.</p>
       </div>
 
-      <div className="studio-workbench">
-        <div className="canvas-meta" aria-hidden="true">
-          <span>Pânză pătrată</span>
-          <span>600 × 600 px</span>
-        </div>
-        <div className="canvas-frame">
-          <canvas
-            ref={canvasRef}
-            className="drawing-canvas"
-            aria-label={`Pânză de desen pentru luna ${month.name}`}
-            onPointerDown={startDrawing}
-            onPointerMove={draw}
-            onPointerUp={stopDrawing}
-            onPointerCancel={stopDrawing}
-            onPointerLeave={(event) => {
-              if (event.buttons === 0) stopDrawing(event);
-            }}
-          />
-        </div>
-      </div>
-
-      <div className="studio-toolbox" aria-label="Instrumentele atelierului">
-        <div className="toolbox-heading">
-          <span>Instrumente</span>
-          <span>deget · mouse · stylus</span>
-        </div>
-        <div className="studio-controls">
-          <label className="control control--color">
-            <span>Culoare</span>
-            <input
-              type="color"
-              value={color}
-              onChange={(event) => {
-                setColor(event.target.value);
-                setIsEraser(false);
-              }}
-              aria-label="Alege culoarea pensulei"
-            />
-          </label>
-
-          <label className="control control--range">
-            <span>Grosime</span>
-            <input
-              type="range"
-              min="3"
-              max="36"
-              value={brushSize}
-              onChange={(event) => setBrushSize(Number(event.target.value))}
-              aria-label="Grosimea pensulei"
-            />
-            <output>{brushSize}px</output>
-          </label>
-
-          <button
-            className={`tool-button${isEraser ? " is-active" : ""}`}
-            type="button"
-            onClick={() => setIsEraser((value) => !value)}
-            aria-pressed={isEraser}
-          >
-            <span aria-hidden="true">◇</span> Gumă
-          </button>
-          <button className="tool-button" type="button" onClick={undo}>
-            <span aria-hidden="true">↶</span> Înapoi
-          </button>
-          <button className="tool-button" type="button" onClick={clearCanvas}>
-            <span aria-hidden="true">×</span> Șterge
-          </button>
-        </div>
-
-        <div className="device-upload">
-          <span className="device-upload-mark" aria-hidden="true">＋</span>
-          <div className="device-upload-copy">
-            <span className="device-upload-label">Imagine din dispozitiv</span>
-            <span className="device-upload-status" aria-live="polite">
-              {importedFileName || "PNG, JPG sau WebP · maximum 30 MB"}
-            </span>
+      <div className="studio-body">
+        <div className="studio-workbench">
+          <div className="canvas-meta" aria-hidden="true">
+            <span>Foaie de lucru</span>
+            <span>600 × 600 px</span>
           </div>
+          <div className="canvas-frame">
+            <canvas
+              ref={canvasRef}
+              className="drawing-canvas"
+              aria-label={`Pânză de desen pentru luna ${month.name}`}
+              onPointerDown={startDrawing}
+              onPointerMove={draw}
+              onPointerUp={stopDrawing}
+              onPointerCancel={stopDrawing}
+              onPointerLeave={(event) => {
+                if (event.buttons === 0) stopDrawing(event);
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="studio-sidebar">
+          <div className="studio-toolbox" aria-label="Instrumentele atelierului">
+            <div className="toolbox-heading">
+              <span>Instrumente</span>
+              <span>deget · mouse · stylus</span>
+            </div>
+            <div className="studio-controls">
+              <label className="control control--color">
+                <span>Culoare</span>
+                <input
+                  type="color"
+                  value={color}
+                  onChange={(event) => {
+                    setColor(event.target.value);
+                    setIsEraser(false);
+                  }}
+                  aria-label="Alege culoarea pensulei"
+                />
+              </label>
+
+              <label className="control control--range">
+                <span>Grosime</span>
+                <input
+                  type="range"
+                  min="3"
+                  max="36"
+                  value={brushSize}
+                  onChange={(event) => setBrushSize(Number(event.target.value))}
+                  aria-label="Grosimea pensulei"
+                />
+                <output>{brushSize}px</output>
+              </label>
+
+              <button
+                className={`tool-button${isEraser ? " is-active" : ""}`}
+                type="button"
+                onClick={() => setIsEraser((value) => !value)}
+                aria-pressed={isEraser}
+              >
+                <span aria-hidden="true">◇</span> Gumă
+              </button>
+              <button className="tool-button" type="button" onClick={undo}>
+                <span aria-hidden="true">↶</span> Înapoi
+              </button>
+              <button className="tool-button" type="button" onClick={clearCanvas}>
+                <span aria-hidden="true">×</span> Șterge
+              </button>
+            </div>
+
+            <div className="device-upload">
+              <span className="device-upload-mark" aria-hidden="true">＋</span>
+              <div className="device-upload-copy">
+                <span className="device-upload-label">Imagine din dispozitiv</span>
+                <span className="device-upload-status" aria-live="polite">
+                  {importedFileName || "PNG, JPG sau WebP · maximum 30 MB"}
+                </span>
+              </div>
+              <button
+                className="import-button"
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Alege imagine
+              </button>
+              <input
+                ref={fileInputRef}
+                className="file-input"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={importImage}
+                tabIndex={-1}
+                aria-hidden="true"
+              />
+            </div>
+          </div>
+
+          <div className="publication-fields">
+            <label className="publication-field">
+              <span>Mesaj atașat (opțional)</span>
+              <textarea
+                value={message}
+                maxLength={300}
+                rows={3}
+                placeholder="Scrie câteva cuvinte despre luna aceasta…"
+                onChange={(event) => {
+                  setMessage(event.target.value);
+                  setSaved(false);
+                }}
+              />
+              <small>{message.length}/300</small>
+            </label>
+
+            <label className="publication-field">
+              <span>Cod de publicare</span>
+              <input
+                type="password"
+                value={publicationCode}
+                autoComplete="off"
+                placeholder="Codul știut doar de voi doi"
+                onChange={(event) => onPublicationCodeChange(event.target.value)}
+              />
+            </label>
+          </div>
+
           <button
-            className="import-button"
+            className="save-button"
             type="button"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={saveCanvas}
+            disabled={saving}
           >
-            Alege imagine
+            <span>
+              {saving
+                ? "Se publică…"
+                : saved
+                  ? "Salvat în calendar"
+                  : `Publică în ${month.name}`}
+            </span>
+            <span aria-hidden="true">{saved ? "✓" : "→"}</span>
           </button>
-          <input
-            ref={fileInputRef}
-            className="file-input"
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            onChange={importImage}
-            tabIndex={-1}
-            aria-hidden="true"
-          />
+          <p className="save-note" aria-live="polite">
+            {saveFeedback ||
+              "Imaginea publicată va fi vizibilă tuturor, pe orice dispozitiv."}
+          </p>
         </div>
       </div>
-      <div className="publication-fields">
-        <label className="publication-field">
-          <span>Mesaj atașat (opțional)</span>
-          <textarea
-            value={message}
-            maxLength={300}
-            rows={3}
-            placeholder="Scrie câteva cuvinte despre luna aceasta…"
-            onChange={(event) => {
-              setMessage(event.target.value);
-              setSaved(false);
-            }}
-          />
-          <small>{message.length}/300</small>
-        </label>
-
-        <label className="publication-field">
-          <span>Cod de publicare</span>
-          <input
-            type="password"
-            value={publicationCode}
-            autoComplete="off"
-            placeholder="Codul știut doar de voi doi"
-            onChange={(event) => onPublicationCodeChange(event.target.value)}
-          />
-        </label>
-      </div>
-
-      <button
-        className="save-button"
-        type="button"
-        onClick={saveCanvas}
-        disabled={saving}
-      >
-        <span>
-          {saving
-            ? "Se publică…"
-            : saved
-              ? "Salvat în calendar"
-              : `Publică în ${month.name}`}
-        </span>
-        <span aria-hidden="true">{saved ? "✓" : "→"}</span>
-      </button>
-      <p className="save-note" aria-live="polite">
-        {saveFeedback ||
-          "Imaginea publicată va fi vizibilă tuturor, pe orice dispozitiv."}
-      </p>
     </section>
   );
 }
@@ -552,7 +557,7 @@ function FocusModal({
           ) : null}
 
           <p className="focus-caption">
-            Ușile s-au deschis. Lasă înăuntru desenul care păstrează luna aceasta.
+            Desenează, adaugă o fotografie și păstrează luna aici.
           </p>
         </div>
 
