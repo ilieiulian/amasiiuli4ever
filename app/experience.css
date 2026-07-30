@@ -298,8 +298,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .month-square {
   position: relative;
   display: block;
-  width: 70%;
-  margin-inline: auto;
+  width: 100%;
   aspect-ratio: var(--door-aspect-ratio);
   overflow: visible;
   border: 0;

@@ -34,7 +34,7 @@ test("uses the public drawing API instead of browser-only storage", async () => 
   assert.match(css, /\.publication-fields/);
   assert.match(css, /\.message-pair/);
   assert.match(css, /\.drawing-messages/);
-  assert.match(css, /\.month-square[\s\S]*width: 70%/);
+  assert.match(css, /\.month-square[\s\S]*width: 100%/);
   assert.match(css, /\.device-upload/);
   assert.match(css, /\.studio-toolbox/);
   assert.match(css, /\.tool-grid/);
