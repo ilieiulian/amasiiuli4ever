@@ -35,6 +35,8 @@ test("uses the public drawing API instead of browser-only storage", async () => 
   assert.match(css, /\.message-pair/);
   assert.match(css, /\.drawing-messages/);
   assert.match(css, /\.month-square[\s\S]*width: 100%/);
+  assert.match(css, /\.door-half[\s\S]*background-image: url\("\/texturi\/usi\/background\.png"\)[\s\S]*background-size: 200% auto/);
+  assert.match(css, /\.door-half::before[\s\S]*var\(--door-texture-monthly-png\)[\s\S]*background-size: 70% auto/);
   assert.match(css, /\.device-upload/);
   assert.match(css, /\.studio-toolbox/);
   assert.match(css, /\.tool-grid/);
