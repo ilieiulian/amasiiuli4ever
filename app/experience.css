@@ -27,9 +27,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 
 .site-shell {
-  min-height: 100vh;
   overflow-x: clip;
-  padding-block: clamp(6px, 1vw, 16px);
+  padding: clamp(6px, 1vw, 16px) 0 0;
 }
 
 .repeating-background {
@@ -43,7 +42,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   container-type: inline-size;
   width: 90%;
   max-width: 1500px;
-  min-height: 100vh;
   margin: 0 auto;
   overflow: hidden;
   background: var(--site-blue);
