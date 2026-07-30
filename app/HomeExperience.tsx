@@ -1143,6 +1143,7 @@ export default function HomeExperience() {
               </div>
             ))}
           </div>
+          <div className="building-bottom" aria-hidden="true" />
         </section>
       </div>
 

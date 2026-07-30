@@ -49,8 +49,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   background: var(--site-blue);
 }
 
-.repeating-background::before,
-.repeating-background::after {
+.repeating-background::before {
   content: "";
   position: absolute;
   right: 0;
@@ -69,11 +68,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   background-image: var(--background-top);
 }
 
-.repeating-background::after {
-  bottom: 0;
-  height: 28cqw;
-  background-image: var(--background-bottom);
-}
 
 .repeating-background > * {
   position: relative;
@@ -240,6 +234,18 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 
 .months-grid {
   display: block;
+}
+.building-bottom {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  aspect-ratio: 2089 / 999;
+  margin-top: calc(-1 * var(--middle-middle-overlap));
+  background-image: var(--background-bottom);
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: 100% auto;
+  pointer-events: none;
 }
 .month-row {
   position: relative;
